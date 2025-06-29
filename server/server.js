@@ -13,7 +13,6 @@ ws.on("request", (req) => {
     const connection = req.accept(null, req.origin)
     connection.on("message", (message) => {
         const data = JSON.parse(message.utf8Data);
-        console.log(connection);
         if (!palyers[data.name]) {
             palyers[connection] = data.name
             // palyers[id] = connection
@@ -27,7 +26,6 @@ ws.on("request", (req) => {
     connection.on("close", () => {
         // palyers[connection]
         palyers.delete(connection)
-        console.log(palyers[connection]);
         // console.log(palyers[""]);
     })
 })

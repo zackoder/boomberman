@@ -10,13 +10,13 @@ export class Game {
         for (let row = 0; row < this.map.length; row++) {
             for (let column = 0; column < this.map.length; column++) {
                 if (this.map[row][column] === 0) {
-                    children.push(createHTML("div", { className: `sell emptysell ${row}${column}` }))
+                    children.push(createHTML("div", { className: `image-crop-container` }, createHTML("img", { className: "img wall", src: "http://localhost:3000/src/TurboGrafx-16 - Bomberman - Battle Stage.png" })))
                 }
                 if (this.map[row][column] === 1) {
-                    children.push(createHTML("div", { className: `sell wall ${row}${column}` }))
+                    children.push(createHTML("div", { className: `image-crop-container` }, createHTML("img", { className: "img emptysell", src: "http://localhost:3000/src/TurboGrafx-16 - Bomberman - Battle Stage.png" })))
                 }
                 if (this.map[row][column] === 2) {
-                    children.push(createHTML("div", { className: `sell softsell ${row}${column}` }))
+                    children.push(createHTML("div", { className: `image-crop-container` }, createHTML("img", { className: "img cropped-image", src: "http://localhost:3000/src/TurboGrafx-16 - Bomberman - Battle Stage.png" })))
                 }
             }
         }
