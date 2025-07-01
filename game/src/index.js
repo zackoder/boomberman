@@ -28,7 +28,7 @@ function homePage() {
 
 function createConnection() {
   if (socket !== null) return
-  socket = new WebSocket("ws://localhost:3001")
+  socket = new WebSocket("ws://10.1.2.7:3001")
   socket.onmessage = (e) => {
     const data = JSON.parse(e.data);
     if (!data) return
@@ -49,7 +49,7 @@ function createConnection() {
 
 function submitName(e) {
   e.preventDefault()
-  const name = e.target.children[1].value.trim()
+  const name = e.target.chi<ldren[1].value.trim()
   // console.log(ipt);
   if (!name) return
   socket.send(JSON.stringify({ "type": "name", name }))
