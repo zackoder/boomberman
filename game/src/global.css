@@ -1,6 +1,6 @@
 .gameContainer {
-  width: 400px;
-  height: 400px;
+  width: 450px;
+  height: 460px;
   /* background-color: gray; */
   display: grid;
   grid-template-columns: repeat(15, 1fr);
@@ -16,6 +16,8 @@
 
 .img {
   zoom: 200%;
+  /* height: 18px;
+  width: 17px; */
 }
 
 .wall {
@@ -25,8 +27,14 @@
 
 .emptysell {
   position: absolute;
-  transform: translate(-10, 0);
+  transform: translate(-50px, -33px);
 }
+
+.softwall {
+  position: absolute;
+  transform: translate(-305px, -48px);
+}
+
 
 /* .sell {
   width: 50px;
