@@ -1,12 +1,12 @@
-.gameContainer {
+/* .gameContainer {
   width: 450px;
   height: 460px;
-  /* background-color: gray; */
+  background-color: gray; 
   display: grid;
   grid-template-columns: repeat(15, 1fr);
   grid-template-rows: repeat(15, 1fr);
 
-  /* gap: 1px; */
+   gap: 1px; 
 }
 
 .image-crop-container {
@@ -16,8 +16,8 @@
 
 .img {
   zoom: 200%;
-  /* height: 18px;
-  width: 17px; */
+   height: 18px;
+  width: 17px; 
 }
 
 .wall {
@@ -33,10 +33,53 @@
 .softwall {
   position: absolute;
   transform: translate(-305px, -48px);
-}
+} */
 
 
 /* .sell {
   width: 50px;
   height: 50px;
 } */
+
+
+
+
+.gameContainer {
+  width: 450px;
+  height: 450px;
+  display: grid;
+  grid-template-columns: repeat(15, 1fr);
+  grid-template-rows: repeat(15, 1fr);
+  gap: 1px; /* optional for grid lines */
+  background-color: #222; /* optional background for contrast */
+}
+
+.gameContainer > div {
+  width: 100%;
+  height: 100%;
+  position: relative; /* useful for positioning player inside */
+}
+
+/* === Cell Types === */
+.wall {
+  background-color: #333;
+  border: 2px solid #555;
+}
+
+.softwall {
+  background-color: #888;
+  border: 2px dashed #ccc;
+}
+
+.emptysell {
+  background-color: #eaeaea;
+}
+
+/* === Player === */
+.player {
+  width: 100%;
+  height: 100%;
+  background-color: red;
+  border-radius: 50%;
+  box-shadow: 0 0 5px black;
+}

@@ -21,9 +21,19 @@ const SupportedEvents = [
 ];
 
 function getElementId(element) {
+     
+  if (element === document) return "document";
+  if (element === window) return "window";
+
+  if (!element || !element.dataset) {
+    console.warn("[getElementId] Invalid element passed:", element);
+    return null;
+  }
+
   if (!element.dataset.eventId) {
     element.dataset.eventId = `eid_${++idCounter}`;
   }
+
   return element.dataset.eventId;
 }
 
