@@ -22,10 +22,13 @@ ws.on("request", (req) => {
     const data = JSON.parse(message.utf8Data);
 
     // Reject if name is already taken
-    if ([...players.values()].some((p) => p.name === data.name)) {
-      return connection.sendUTF(
-        JSON.stringify({ error: "choose another name" })
-      );
+    if (![...players.values()].includes(data.name)) {
+      players.set(connection, data.name);
+      // palyers[id] = connection
+      if (map.length === 0) {
+        createmap();
+      }
+      connection.sendUTF(JSON.stringify({ map }));
     }
 
     // Assign start position
@@ -46,40 +49,40 @@ ws.on("request", (req) => {
 
     // Send initial map and player info
     connection.sendUTF(JSON.stringify({ type: "init", map, player }));
-  });
-  if (data.type === "move") {
-    const player = players.get(connection);
-    if (!player) return;
-
-    const { dir } = data;
-    const dirs = {
-      up: { dx: 0, dy: -1 },
-      down: { dx: 0, dy: 1 },
-      left: { dx: -1, dy: 0 },
-      right: { dx: 1, dy: 0 },
-    };
-
-    const { dx, dy } = dirs[dir] || {};
-    const newX = player.x + dx;
-    const newY = player.y + dy;
-
-    if (map[newY]?.[newX] === 0) {
-      player.x = newX;
-      player.y = newY;
-
-      // Send updated position to all players
-      for (let [conn, p] of players) {
-        conn.sendUTF(
-          JSON.stringify({
-            type: "player-move",
-            name: player.name,
-            x: newX,
-            y: newY,
-          })
-        );
+    if (data.type === "move") {
+      const player = players.get(connection);
+      if (!player) return;
+  
+      const { dir } = data;
+      const dirs = {
+        up: { dx: 0, dy: -1 },
+        down: { dx: 0, dy: 1 },
+        left: { dx: -1, dy: 0 },
+        right: { dx: 1, dy: 0 },
+      };
+  
+      const { dx, dy } = dirs[dir] || {};
+      const newX = player.x + dx;
+      const newY = player.y + dy;
+  
+      if (map[newY]?.[newX] === 0) {
+        player.x = newX;
+        player.y = newY;
+  
+        // Send updated position to all players
+        for (let [conn, p] of players) {
+          conn.sendUTF(
+            JSON.stringify({
+              type: "player-move",
+              name: player.name,
+              x: newX,
+              y: newY,
+            })
+          );
+        }
       }
     }
-  }
+  });
 
   connection.on("close", () => {
     players.delete(connection);
@@ -151,5 +154,5 @@ function createmap() {
 createmap();
 
 server.listen(3001, () => {
-  console.log("Server running at http://localhost:3001");
+  console.log("Server running at http://0.0.0.0:3001");
 });

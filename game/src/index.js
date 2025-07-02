@@ -17,6 +17,8 @@ rout.addrout("/", homePage);
 rout.addrout("/game", gamehandler);
 
 function homePage() {
+  console.log('im heree');
+  
   // onmessage
   const label = createHTML("label", { for: "nameInpt", textContent: "enter your name:" })
   const input = createHTML("input", { id: "nameInpt", className: "input" })
@@ -30,8 +32,9 @@ function homePage() {
 }
 
 function createConnection() {
+  
   if (socket !== null) return
-  socket = new WebSocket("ws://localhost:3001")
+  socket = new WebSocket("ws://0.0.0.0:3001")
 
 socket.onmessage = (e) => {
   const data = JSON.parse(e.data);
@@ -54,7 +57,7 @@ socket.onmessage = (e) => {
     };
     allPlayers[localPlayer.name] = localPlayer;
     rout.navigate("/game");
-    game.drawMap();
+    // game.drawMap();
     renderPlayer(localPlayer);
   }
 
@@ -77,15 +80,6 @@ socket.onmessage = (e) => {
 
 }
 
-function submitName(e) {
-  e.preventDefault()
-  const name = e.target.children[1].value.trim()
-  // console.log(ipt);
-  if (!name) return
-  socket.send(JSON.stringify({ "type": "name", name }))
-
-}
-
 createConnection()
 rout.handleRouteChange()
 
@@ -103,7 +97,7 @@ function renderPlayer(player) {
   // Remove any existing player divs for this name
   document.querySelectorAll(`.player-${player.name}`).forEach(el => el.remove());
 
-  const index = player.y * 15 + player.x; // assuming 15x15 map
+  const index = player.y * 15 + player.x;  
   const cell = document.querySelectorAll(".gameContainer > div")[index];
   if (cell) {
     const playerDiv = createHTML("div", {
@@ -113,7 +107,14 @@ function renderPlayer(player) {
   }
 }
 
+function submitName(e) {
+  e.preventDefault()
+  const name = e.target.children[1].value.trim()
+  // console.log(ipt);
+  if (!name) return
+  socket.send(JSON.stringify({ "type": "name", name }))
 
+}
 
 EventListener("document", "keydown", (e) => {
   const keyMap = {
