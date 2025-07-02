@@ -6,114 +6,132 @@ import { EventListener } from "./core/events.js";
 
 export const rout = new Router();
 const dom = new Dom();
-const root = dom.getRoot()
+const root = dom.getRoot();
 let socket = null;
 let localPlayer = null;
 let allPlayers = {};
 let game = null;
 
-
 rout.addrout("/", homePage);
 rout.addrout("/game", gamehandler);
 
 function homePage() {
-  console.log('im heree');
-  
+  console.log("im heree");
+
   // onmessage
-  const label = createHTML("label", { for: "nameInpt", textContent: "enter your name:" })
-  const input = createHTML("input", { id: "nameInpt", className: "input" })
+  const label = createHTML("label", {
+    for: "nameInpt",
+    textContent: "enter your name:",
+  });
+  const input = createHTML("input", { id: "nameInpt", className: "input" });
 
-  const form = createHTML("form", { onsubmit: submitName }, label, input)
-  const game = createHTML("div", {
-    className: "gameContainer"
-  }, form)
+  const form = createHTML("form", { onsubmit: submitName }, label, input);
+  const game = createHTML(
+    "div",
+    {
+      className: "gameContainer",
+    },
+    form
+  );
 
-  root.appendChild(game)
+  root.appendChild(game);
 }
 
 function createConnection() {
-  
-  if (socket !== null) return
-  socket = new WebSocket("ws://0.0.0.0:3001")
+  if (socket !== null) return;
+  socket = new WebSocket("ws://0.0.0.0:3001");
 
-socket.onmessage = (e) => {
-  const data = JSON.parse(e.data);
-  if (!data) return;
+  socket.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    if (!data) return;
 
-  if (data.error) {
-    const errorContainer = createHTML("p", { className: "error" })
-    errorContainer.textContent = data.error;
-    root.appendChild(errorContainer);
-    setTimeout(() => errorContainer.remove(), 3000);
-  }
-
-  // Handle initial map and player info
-  if (data.type === "init") {
-    game = new Game(data.map);
-    localPlayer = {
-      name: data.player.name,
-      x: data.player.x,
-      y: data.player.y
-    };
-    allPlayers[localPlayer.name] = localPlayer;
-    rout.navigate("/game");
-    // game.drawMap();
-    renderPlayer(localPlayer);
-  }
-
-  // Handle player movement update
-  if (data.type === "player-move") {
-    if (!allPlayers[data.name]) {
-      allPlayers[data.name] = {
-        name: data.name,
-        x: data.x,
-        y: data.y
-      };
-    } else {
-      allPlayers[data.name].x = data.x;
-      allPlayers[data.name].y = data.y;
+    if (data.error) {
+      const errorContainer = createHTML("p", { className: "error" });
+      errorContainer.textContent = data.error;
+      root.appendChild(errorContainer);
+      setTimeout(() => errorContainer.remove(), 3000);
     }
 
-    renderPlayer(allPlayers[data.name]);
-  }
-};
+    // Handle initial map and player info
+    if (data.type === "init") {
+      game = new Game(data.map);
+      localPlayer = {
+        name: data.player.name,
+        x: data.player.x,
+        y: data.player.y,
+      };
+      allPlayers[localPlayer.name] = localPlayer;
+      rout.navigate("/game");
+      game.drawMap();
+      renderPlayer(localPlayer);
+    }
 
+    // Handle player movement update
+    if (data.type === "player-move") {
+      if (!allPlayers[data.name]) {
+        allPlayers[data.name] = {
+          name: data.name,
+          x: data.x,
+          y: data.y,
+        };
+      } else {
+        allPlayers[data.name].x = data.x;
+        allPlayers[data.name].y = data.y;
+      }
+
+      renderPlayer(allPlayers[data.name]);
+    }
+    if (data.type === "player-leave") {
+      document
+        .querySelectorAll(`.player-${data.name}`)
+        .forEach((el) => el.remove());
+      delete allPlayers[data.name];
+    }
+     if (data.type === "bomb-placed") {
+      drawBomb(data.x, data.y);
+    }
+    if (data.type === "bomb-exploded") {
+      animateExplosion(data.x, data.y);
+      removeBomb(data.x, data.y);
+    }
+  };
 }
 
-createConnection()
-rout.handleRouteChange()
+createConnection();
+rout.handleRouteChange();
 
 function gamehandler() {
-  root.innerHTML = ""
-  if (game === undefined) return rout.navigate("/")
+  root.innerHTML = "";
+  if (game === undefined) return rout.navigate("/");
   console.log(game);
-  game.drawMap()
+  // game.drawMap();
+  renderPlayer(localPlayer);
 }
-
-
-
 
 function renderPlayer(player) {
   // Remove any existing player divs for this name
-  document.querySelectorAll(`.player-${player.name}`).forEach(el => el.remove());
+  if (!player) return;
+  document
+    .querySelectorAll(`.player-${player.name}`)
+    .forEach((el) => el.remove());
 
-  const index = player.y * 15 + player.x;  
+  const index = player.y * 15 + player.x;
   const cell = document.querySelectorAll(".gameContainer > div")[index];
   if (cell) {
     const playerDiv = createHTML("div", {
-      className: `player player-${player.name}`
+      className: `player player-${player.name}`,
     });
     cell.appendChild(playerDiv);
   }
 }
 
 function submitName(e) {
-  e.preventDefault()
-  const name = e.target.children[1].value.trim()
+  e.preventDefault();
+  const nameInput = e.target.querySelector("#nameInpt");
   // console.log(ipt);
-  if (!name) return
-  socket.send(JSON.stringify({ "type": "name", name }))
-
+ if (!nameInput) return;
+ const name = nameInput.value.trim();
+  socket.send(JSON.stringify({ type: "name", name }));
 }
 
 EventListener("document", "keydown", (e) => {
@@ -121,13 +139,72 @@ EventListener("document", "keydown", (e) => {
     ArrowUp: "up",
     ArrowDown: "down",
     ArrowLeft: "left",
-    ArrowRight: "right"
+    ArrowRight: "right",
   };
 
   if (keyMap[e.key] && socket?.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({
-      type: "move",
-      dir: keyMap[e.key]
-    }));
+    socket.send(
+      JSON.stringify({
+        type: "move",
+        dir: keyMap[e.key],
+      })
+    );
   }
+  if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
+  socket.send(JSON.stringify({ type: "drop-bomb" }));
+}
 });
+
+
+
+function animateExplosion(centerX, centerY, directions = ["up", "down", "left", "right"]) {
+  const affectedTiles = [{ x: centerX, y: centerY }];
+
+  const dirMap = {
+    up: { dx: 0, dy: -1 },
+    down: { dx: 0, dy: 1 },
+    left: { dx: -1, dy: 0 },
+    right: { dx: 1, dy: 0 },
+  };
+
+  for (const dir of directions) {
+    const { dx, dy } = dirMap[dir];
+    const x = centerX + dx;
+    const y = centerY + dy;
+
+    // Optional: add condition to prevent going into walls
+    if (x >= 0 && x < MAX_ROWS && y >= 0 && y < MAX_ROWS) {
+      affectedTiles.push({ x, y });
+    }
+  }
+
+  for (const tile of affectedTiles) {
+    const index = tile.y * MAX_ROWS + tile.x;
+    const cell = document.querySelectorAll(".gameContainer > div")[index];
+    if (cell) {
+      const explosion = document.createElement("div");
+      explosion.className = "explosion";
+      cell.appendChild(explosion);
+
+      // Remove explosion after a delay
+      setTimeout(() => explosion.remove(), 500); // 0.5 second explosion
+    }
+  }
+}
+
+function drawBomb(x, y) {
+  const index = y * MAX_ROWS + x;
+  const cell = document.querySelectorAll(".gameContainer > div")[index];
+  if (!cell) return;
+  const bomb = createHTML("div", { className: "bomb"});
+  cell.appendChild(bomb);
+}
+
+function removeBomb(x, y) {
+  const index = y * MAX_ROWS + x;
+  const cell = document.querySelectorAll(".gameContainer > div")[index];
+  if (!cell) return;
+
+  const bomb = cell.querySelector(".bomb");
+  if (bomb) bomb.remove();
+}

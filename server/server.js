@@ -6,6 +6,7 @@ const server = http.createServer(app);
 const ws = new wsokcet({ httpServer: server });
 const map = [];
 const MAX_ROWS = 15;
+const bombs = [];
 const START_POSITIONS = [
   { x: 1, y: 1 },
   { x: MAX_ROWS - 2, y: 1 },
@@ -20,39 +21,42 @@ ws.on("request", (req) => {
 
   connection.on("message", (message) => {
     const data = JSON.parse(message.utf8Data);
-
-    // Reject if name is already taken
-    if (![...players.values()].includes(data.name)) {
-      players.set(connection, data.name);
-      // palyers[id] = connection
-      if (map.length === 0) {
-        createmap();
-      }
-      connection.sendUTF(JSON.stringify({ map }));
-    }
-
     // Assign start position
-    const startIndex = players.size;
-    if (startIndex >= START_POSITIONS.length) {
-      return connection.sendUTF(JSON.stringify({ error: "Room is full" }));
+    if (data.type === "name") {
+      const startIndex = players.size;
+      if (startIndex >= START_POSITIONS.length) {
+        return connection.sendUTF(JSON.stringify({ error: "Room is full" }));
+      }
+
+      const position = START_POSITIONS[startIndex];
+      const player = {
+        name: data.name,
+        x: position.x,
+        y: position.y,
+        lives: 3,
+      };
+
+      // Check for name duplication
+      if ([...players.values()].some((p) => p.name === data.name)) {
+        return connection.sendUTF(JSON.stringify({ error: "Name taken" }));
+      }
+
+      players.set(connection, player);
+      if (map.length === 0) createmap();
+
+      connection.sendUTF(JSON.stringify({ type: "init", map, player }));
     }
-
-    const position = START_POSITIONS[startIndex];
-    const player = {
-      name: data.name,
-      x: position.x,
-      y: position.y,
-      lives: 3,
-    };
-
-    players.set(connection, player);
 
     // Send initial map and player info
-    connection.sendUTF(JSON.stringify({ type: "init", map, player }));
     if (data.type === "move") {
+      if (!players.has(connection)) {
+        return connection.sendUTF(
+          JSON.stringify({ error: "Unregistered player" })
+        );
+      }
       const player = players.get(connection);
       if (!player) return;
-  
+
       const { dir } = data;
       const dirs = {
         up: { dx: 0, dy: -1 },
@@ -60,15 +64,18 @@ ws.on("request", (req) => {
         left: { dx: -1, dy: 0 },
         right: { dx: 1, dy: 0 },
       };
-  
-      const { dx, dy } = dirs[dir] || {};
+
+      const direction = dirs[dir];
+      if (!direction) return;
+
+      const { dx, dy } = direction;
       const newX = player.x + dx;
       const newY = player.y + dy;
-  
+
       if (map[newY]?.[newX] === 0) {
         player.x = newX;
         player.y = newY;
-  
+
         // Send updated position to all players
         for (let [conn, p] of players) {
           conn.sendUTF(
@@ -82,12 +89,127 @@ ws.on("request", (req) => {
         }
       }
     }
+    if (data.type === "drop-bomb") {
+      const player = players.get(connection);
+    if (!player || player.lives <= 0) return;
+     
+
+      const { x, y, name } = player;
+
+      // Check if a bomb is already at this location
+      if (bombs.some((b) => b.x === x && b.y === y)) return;
+
+      // Add bomb to array
+      bombs.push({ x, y, owner: name });
+
+      // Notify clients
+      for (let [conn] of players) {
+        conn.sendUTF(
+          JSON.stringify({
+            type: "bomb-placed",
+            x,
+            y,
+          })
+        );
+      }
+
+      // Schedule explosion in 2 seconds
+      setTimeout(() => {
+        handleExplosion(x, y, name);
+      }, 2000);
+    }
+    if (player.lives <= 0) {
+  // Mark player as dead
+  player.dead = true;
+
+  // Notify all players
+  for (let [conn] of players) {
+    conn.sendUTF(
+      JSON.stringify({
+        type: "player-dead",
+        name: player.name,
+      })
+    );
+  }
+
+   
+ 
+}
+
+   
   });
 
   connection.on("close", () => {
+    const leavingPlayer = players.get(connection);
+    if (leavingPlayer) {
+      for (let [conn] of players) {
+        conn.sendUTF(
+          JSON.stringify({
+            type: "player-leave",
+            name: leavingPlayer.name,
+          })
+        );
+      }
+    }
     players.delete(connection);
   });
 });
+ 
+
+function handleExplosion(x, y, owner) {
+  
+  // Remove bomb from array
+  const index = bombs.findIndex(b => b.x === x && b.y === y && b.owner === owner);
+  if (index !== -1) bombs.splice(index, 1);
+
+  
+  // For now, only broadcast explosion (no damage or tile breaking yet)
+  const explosionTiles = [{ x, y }];
+  const directions = [
+    { dx: 0, dy: -1 },
+    { dx: 0, dy: 1 },
+    { dx: -1, dy: 0 },
+    { dx: 1, dy: 0 }
+  ];
+  for (const { dx, dy } of directions) {
+    const nx = x + dx;
+    const ny = y + dy;
+    if (nx < 0 || nx >= MAX_ROWS || ny < 0 || ny >= MAX_ROWS) continue;
+    
+    if (map[ny][nx] === 1) continue; // hard wall blocks explosion
+    
+    explosionTiles.push({ x: nx, y: ny });
+    
+    if (map[ny][nx] === 2) {
+      // Soft wall: destroy it
+      map[ny][nx] = 0;
+    }
+  }
+  
+  for (let [conn, player] of players) {
+    if (explosionTiles.some(t => t.x === player.x && t.y === player.y)) {
+      player.lives--;
+      if (player.lives <= 0) {
+        // Handle player death (optional: disconnect, or mark dead)
+      }
+      // Inform player of life update if needed
+    }
+  }
+  
+  for (let [conn] of players) {
+     conn.sendUTF(JSON.stringify({
+       type: "bomb-exploded",
+       x,
+       y,
+       explosionTiles,
+       map, 
+     }));
+   }
+   
+}
+
+
+
 
 // console.log(map);
 
