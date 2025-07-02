@@ -87,12 +87,17 @@ function createConnection() {
         .forEach((el) => el.remove());
       delete allPlayers[data.name];
     }
-     if (data.type === "bomb-placed") {
+    if (data.type === "bomb-placed") {
       drawBomb(data.x, data.y);
     }
     if (data.type === "bomb-exploded") {
       animateExplosion(data.x, data.y);
       removeBomb(data.x, data.y);
+    }
+    if (data.type === "player-dead") {
+      document
+        .querySelectorAll(`.player-${data.name}`)
+        .forEach((el) => el.classList.add("dead"));  
     }
   };
 }
@@ -129,8 +134,8 @@ function submitName(e) {
   e.preventDefault();
   const nameInput = e.target.querySelector("#nameInpt");
   // console.log(ipt);
- if (!nameInput) return;
- const name = nameInput.value.trim();
+  if (!nameInput) return;
+  const name = nameInput.value.trim();
   socket.send(JSON.stringify({ type: "name", name }));
 }
 
@@ -151,13 +156,15 @@ EventListener("document", "keydown", (e) => {
     );
   }
   if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
-  socket.send(JSON.stringify({ type: "drop-bomb" }));
-}
+    socket.send(JSON.stringify({ type: "drop-bomb" }));
+  }
 });
 
-
-
-function animateExplosion(centerX, centerY, directions = ["up", "down", "left", "right"]) {
+function animateExplosion(
+  centerX,
+  centerY,
+  directions = ["up", "down", "left", "right"]
+) {
   const affectedTiles = [{ x: centerX, y: centerY }];
 
   const dirMap = {
@@ -196,7 +203,7 @@ function drawBomb(x, y) {
   const index = y * MAX_ROWS + x;
   const cell = document.querySelectorAll(".gameContainer > div")[index];
   if (!cell) return;
-  const bomb = createHTML("div", { className: "bomb"});
+  const bomb = createHTML("div", { className: "bomb" });
   cell.appendChild(bomb);
 }
 

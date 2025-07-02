@@ -55,7 +55,7 @@ ws.on("request", (req) => {
         );
       }
       const player = players.get(connection);
-      if (!player) return;
+      if (!player || player.dead) return;
 
       const { dir } = data;
       const dirs = {
@@ -91,8 +91,7 @@ ws.on("request", (req) => {
     }
     if (data.type === "drop-bomb") {
       const player = players.get(connection);
-    if (!player || player.lives <= 0) return;
-     
+      if (!player || player.lives <= 0) return;
 
       const { x, y, name } = player;
 
@@ -118,25 +117,6 @@ ws.on("request", (req) => {
         handleExplosion(x, y, name);
       }, 2000);
     }
-    if (player.lives <= 0) {
-  // Mark player as dead
-  player.dead = true;
-
-  // Notify all players
-  for (let [conn] of players) {
-    conn.sendUTF(
-      JSON.stringify({
-        type: "player-dead",
-        name: player.name,
-      })
-    );
-  }
-
-   
- 
-}
-
-   
   });
 
   connection.on("close", () => {
@@ -154,62 +134,75 @@ ws.on("request", (req) => {
     players.delete(connection);
   });
 });
- 
 
 function handleExplosion(x, y, owner) {
-  
   // Remove bomb from array
-  const index = bombs.findIndex(b => b.x === x && b.y === y && b.owner === owner);
+  const index = bombs.findIndex(
+    (b) => b.x === x && b.y === y && b.owner === owner
+  );
   if (index !== -1) bombs.splice(index, 1);
 
-  
   // For now, only broadcast explosion (no damage or tile breaking yet)
   const explosionTiles = [{ x, y }];
   const directions = [
     { dx: 0, dy: -1 },
     { dx: 0, dy: 1 },
     { dx: -1, dy: 0 },
-    { dx: 1, dy: 0 }
+    { dx: 1, dy: 0 },
   ];
   for (const { dx, dy } of directions) {
     const nx = x + dx;
     const ny = y + dy;
     if (nx < 0 || nx >= MAX_ROWS || ny < 0 || ny >= MAX_ROWS) continue;
-    
+
     if (map[ny][nx] === 1) continue; // hard wall blocks explosion
-    
+
     explosionTiles.push({ x: nx, y: ny });
-    
+
     if (map[ny][nx] === 2) {
       // Soft wall: destroy it
       map[ny][nx] = 0;
     }
   }
-  
+
   for (let [conn, player] of players) {
-    if (explosionTiles.some(t => t.x === player.x && t.y === player.y)) {
+    if (explosionTiles.some((t) => t.x === player.x && t.y === player.y)) {
       player.lives--;
+
+      conn.sendUTF(
+        JSON.stringify({
+          type: "update-lives",
+          name: player.name,
+          lives: player.lives,
+        })
+      );
       if (player.lives <= 0) {
-        // Handle player death (optional: disconnect, or mark dead)
+        // Mark player as dead
+        player.dead = true;
+        for (let [conn] of players) {
+          conn.sendUTF(
+            JSON.stringify({
+              type: "player-dead",
+              name: player.name,
+            })
+          );
+        }
       }
-      // Inform player of life update if needed
     }
   }
-  
+
   for (let [conn] of players) {
-     conn.sendUTF(JSON.stringify({
-       type: "bomb-exploded",
-       x,
-       y,
-       explosionTiles,
-       map, 
-     }));
-   }
-   
+    conn.sendUTF(
+      JSON.stringify({
+        type: "bomb-exploded",
+        x,
+        y,
+        explosionTiles,
+        map,
+      })
+    );
+  }
 }
-
-
-
 
 // console.log(map);
 
