@@ -22,6 +22,9 @@ ws.on("request", (req) => {
   connection.on("message", (message) => {
     const data = JSON.parse(message.utf8Data);
     // Assign start position
+    console.log(data.message);
+    // console.log(players.get());
+    broadcast({ message: data.message });
     if (data.type === "name") {
       const startIndex = players.size;
       if (startIndex >= START_POSITIONS.length) {
@@ -78,23 +81,18 @@ ws.on("request", (req) => {
         player.x = newX;
         player.y = newY;
 
-        // Send updated position to all players
-        for (let [conn, p] of players) {
-          conn.sendUTF(
-            JSON.stringify({
-              type: "player-move",
-              name: player.name,
-              x: newX,
-              y: newY,
-            })
-          );
-        }
+        broadcast({
+          type: "player-move",
+          name: p.name,
+          x: newX,
+          y: newY,
+        });
       }
     }
     if (data.type === "drop-bomb") {
       const player = players.get(connection);
       if (!player || player.lives <= 0) return;
-       if (player.activeBombs >= player.maxBombs) return;
+      if (player.activeBombs >= player.maxBombs) return;
 
       const { x, y, name } = player;
 
@@ -117,7 +115,7 @@ ws.on("request", (req) => {
       // Schedule explosion in 2 seconds
       setTimeout(() => {
         handleExplosion(x, y, name);
-        player.activeBombs--; 
+        player.activeBombs--;
       }, 2000);
     }
   });
@@ -137,6 +135,14 @@ ws.on("request", (req) => {
     players.delete(connection);
   });
 });
+
+function broadcast(message) {
+  // Send updated position to all players
+  for (let [conn, p] of players) {
+    console.log(message);
+    conn.sendUTF(JSON.stringify(message));
+  }
+}
 
 function handleExplosion(x, y, owner) {
   // Remove bomb from array
@@ -269,5 +275,5 @@ function createmap() {
 createmap();
 
 server.listen(3001, () => {
-  console.log("Server running at http://0.0.0.0:3001");
+  console.log("Server running at http://0.0.0.0:3000");
 });

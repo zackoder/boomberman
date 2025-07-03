@@ -43,10 +43,10 @@
 
 
 .body {
-  margin: 0;
-  padding: 0;
+  width: 100%;
+  height: 100vh;
   font-family: Arial, sans-serif;
-  background-color: black; 
+  /* background-color: black;  */
 
 }
 
@@ -57,7 +57,7 @@
   grid-template-columns: repeat(15, 1fr);
   grid-template-rows: repeat(15, 1fr);
   gap: 1px;  
-  background-color: #222;  
+  /* background-color: #222;   */
 }
 
 .gameContainer > div {

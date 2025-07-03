@@ -34,13 +34,26 @@ function homePage() {
     },
     form
   );
-
+  // const chatSection = createHTML(
+  //   "div",
+  //   { className: "chatbox" },
+  //   createHTML("div", { className: "mesagesContainer" }),
+  //   createHTML(
+  //     "form",
+  //     { classList: "chatForm" },
+  //     createHTML("input", { className: "chatInput" })
+  //   )
+  // );
+  // game.appendChild(chatSection);
   root.appendChild(game);
 }
-
+function chatHandler(e) {
+  e.preventDefault();
+  socket.send(JSON.stringify({ message: e.target.children[0].value }));
+}
 function createConnection() {
   if (socket !== null) return;
-  socket = new WebSocket("ws://0.0.0.0:3001");
+  socket = new WebSocket("ws://0.0.0.0:3001"); //this should be updated if needed when needed
 
   socket.onmessage = (e) => {
     const data = JSON.parse(e.data);
@@ -62,9 +75,21 @@ function createConnection() {
         y: data.player.y,
       };
       allPlayers[localPlayer.name] = localPlayer;
-      rout.navigate("/game");
-      game.drawMap();
-      renderPlayer(localPlayer);
+      // rout.navigate("/game");
+      // game.drawMap();
+      // renderPlayer(localPlayer);
+      const chatSection = createHTML(
+        "div",
+        { className: "chatbox" },
+        createHTML("div", { className: "mesagesContainer" }),
+        createHTML(
+          "form",
+          { classList: "chatForm" },
+          createHTML("input", { className: "chatInput" })
+        )
+      );
+      root.appendChild(chatSection);
+      EventListener(".chatForm", "submit", chatHandler);
     }
 
     // Handle player movement update
@@ -96,11 +121,10 @@ function createConnection() {
       removeBomb(data.x, data.y);
     }
     if (data.type === "player-dead") {
-       document
+      document
         .querySelectorAll(`.player-${data.name}`)
         .forEach((el) => el.remove());
       delete allPlayers[data.name];
-
     }
   };
 }
@@ -181,7 +205,7 @@ function animateExplosion(
     const x = centerX + dx;
     const y = centerY + dy;
 
-  //  this condition is to prevent going into walls
+    //  this condition is to prevent going into walls
     if (x >= 0 && x < MAX_ROWS && y >= 0 && y < MAX_ROWS) {
       affectedTiles.push({ x, y });
     }
@@ -190,16 +214,16 @@ function animateExplosion(
   for (const tile of affectedTiles) {
     const index = tile.y * MAX_ROWS + tile.x;
     const cell = document.querySelectorAll(".gameContainer > div")[index];
-    if (cell){
-      if (!cell.classList.contains("wall")){
-        const explosion = createHTML("div", {className : "explosion"});
+    if (cell) {
+      if (!cell.classList.contains("wall")) {
+        const explosion = createHTML("div", { className: "explosion" });
         cell.appendChild(explosion);
-        setTimeout(() => explosion.remove(), 500);  
+        setTimeout(() => explosion.remove(), 500);
       }
       console.log(cell);
-      if (cell.classList.contains('softwall')){
-        cell.classList.remove("softwall")
-        cell.classList.add("emptysell")
+      if (cell.classList.contains("softwall")) {
+        cell.classList.remove("softwall");
+        cell.classList.add("emptysell");
       }
     }
   }
