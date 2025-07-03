@@ -189,12 +189,12 @@ function animateExplosion(
   for (const tile of affectedTiles) {
     const index = tile.y * MAX_ROWS + tile.x;
     const cell = document.querySelectorAll(".gameContainer > div")[index];
-    if (cell) {
-      const explosion = document.createElement("div", {className : "explosion"});
-      cell.appendChild(explosion);
-
-     
-      setTimeout(() => explosion.remove(), 500);  
+    if (cell){
+      if (!cell.classList.contains("wall")){
+        const explosion = createHTML("div", {className : "explosion"});
+        cell.appendChild(explosion);
+        setTimeout(() => explosion.remove(), 500);  
+      }
       console.log(cell);
       if (cell.classList.contains('softwall')){
         cell.classList.remove("softwall")
