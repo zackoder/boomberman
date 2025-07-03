@@ -95,10 +95,9 @@ ws.on("request", (req) => {
 
       const { x, y, name } = player;
 
-      // Check if a bomb is already at this location
+       
       if (bombs.some((b) => b.x === x && b.y === y)) return;
 
-      // Add bomb to array
       bombs.push({ x, y, owner: name });
 
       // Notify clients
@@ -142,7 +141,6 @@ function handleExplosion(x, y, owner) {
   );
   if (index !== -1) bombs.splice(index, 1);
 
-  // For now, only broadcast explosion (no damage or tile breaking yet)
   const explosionTiles = [{ x, y }];
   const directions = [
     { dx: 0, dy: -1 },
@@ -155,14 +153,13 @@ function handleExplosion(x, y, owner) {
     const ny = y + dy;
     if (nx < 0 || nx >= MAX_ROWS || ny < 0 || ny >= MAX_ROWS) continue;
 
-    if (map[ny][nx] === 1) continue; // hard wall blocks explosion
+    if (map[ny][nx] === 1) continue;  
 
     explosionTiles.push({ x: nx, y: ny });
 
     if (map[ny][nx] === 2) {
-      // Soft wall: destroy it
       map[ny][nx] = 0;
-    }
+    } 
   }
 
   for (let [conn, player] of players) {
@@ -177,7 +174,6 @@ function handleExplosion(x, y, owner) {
         })
       );
       if (player.lives <= 0) {
-        // Mark player as dead
         player.dead = true;
         for (let [conn] of players) {
           conn.sendUTF(

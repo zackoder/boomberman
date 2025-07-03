@@ -3,6 +3,7 @@ import { Router } from "./core/router.js";
 import { Dom } from "./core/vdom.js";
 import { Game } from "./game.js";
 import { EventListener } from "./core/events.js";
+const MAX_ROWS = 15;
 
 export const rout = new Router();
 const dom = new Dom();
@@ -189,12 +190,16 @@ function animateExplosion(
     const index = tile.y * MAX_ROWS + tile.x;
     const cell = document.querySelectorAll(".gameContainer > div")[index];
     if (cell) {
-      const explosion = document.createElement("div");
-      explosion.className = "explosion";
+      const explosion = document.createElement("div", {className : "explosion"});
       cell.appendChild(explosion);
 
-      // Remove explosion after a delay
-      setTimeout(() => explosion.remove(), 500); // 0.5 second explosion
+     
+      setTimeout(() => explosion.remove(), 500);  
+      console.log(cell);
+      if (cell.classList.contains('softwall')){
+        cell.classList.remove("softwall")
+        cell.classList.add("emptysell")
+      }
     }
   }
 }
@@ -211,7 +216,6 @@ function removeBomb(x, y) {
   const index = y * MAX_ROWS + x;
   const cell = document.querySelectorAll(".gameContainer > div")[index];
   if (!cell) return;
-
   const bomb = cell.querySelector(".bomb");
   if (bomb) bomb.remove();
 }
