@@ -85,7 +85,7 @@ function createConnection() {
     if (data.type === "player-leave") {
       document
         .querySelectorAll(`.player-${data.name}`)
-        .forEach((el) => el.remove());
+        .forEach((el) => el.classList.remove("player"));
       delete allPlayers[data.name];
     }
     if (data.type === "bomb-placed") {
@@ -96,9 +96,11 @@ function createConnection() {
       removeBomb(data.x, data.y);
     }
     if (data.type === "player-dead") {
-      document
+       document
         .querySelectorAll(`.player-${data.name}`)
-        .forEach((el) => el.classList.add("dead"));  
+        .forEach((el) => el.remove());
+      delete allPlayers[data.name];
+
     }
   };
 }
@@ -115,7 +117,6 @@ function gamehandler() {
 }
 
 function renderPlayer(player) {
-  // Remove any existing player divs for this name
   if (!player) return;
   document
     .querySelectorAll(`.player-${player.name}`)
@@ -180,7 +181,7 @@ function animateExplosion(
     const x = centerX + dx;
     const y = centerY + dy;
 
-    // Optional: add condition to prevent going into walls
+  //  this condition is to prevent going into walls
     if (x >= 0 && x < MAX_ROWS && y >= 0 && y < MAX_ROWS) {
       affectedTiles.push({ x, y });
     }

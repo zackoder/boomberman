@@ -14,7 +14,7 @@ const START_POSITIONS = [
   { x: MAX_ROWS - 2, y: MAX_ROWS - 2 },
 ];
 
-const players = new Map(); // Map<connection, playerData>
+const players = new Map();
 
 ws.on("request", (req) => {
   const connection = req.accept(null, req.origin);
@@ -34,6 +34,8 @@ ws.on("request", (req) => {
         x: position.x,
         y: position.y,
         lives: 3,
+        maxBombs: 1,
+        activeBombs: 0,
       };
 
       // Check for name duplication
@@ -92,13 +94,14 @@ ws.on("request", (req) => {
     if (data.type === "drop-bomb") {
       const player = players.get(connection);
       if (!player || player.lives <= 0) return;
+       if (player.activeBombs >= player.maxBombs) return;
 
       const { x, y, name } = player;
 
-       
       if (bombs.some((b) => b.x === x && b.y === y)) return;
 
       bombs.push({ x, y, owner: name });
+      player.activeBombs++;
 
       // Notify clients
       for (let [conn] of players) {
@@ -114,6 +117,7 @@ ws.on("request", (req) => {
       // Schedule explosion in 2 seconds
       setTimeout(() => {
         handleExplosion(x, y, name);
+        player.activeBombs--; 
       }, 2000);
     }
   });
@@ -153,13 +157,13 @@ function handleExplosion(x, y, owner) {
     const ny = y + dy;
     if (nx < 0 || nx >= MAX_ROWS || ny < 0 || ny >= MAX_ROWS) continue;
 
-    if (map[ny][nx] === 1) continue;  
+    if (map[ny][nx] === 1) continue;
 
     explosionTiles.push({ x: nx, y: ny });
 
     if (map[ny][nx] === 2) {
       map[ny][nx] = 0;
-    } 
+    }
   }
 
   for (let [conn, player] of players) {
