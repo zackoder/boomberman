@@ -47,10 +47,10 @@ function homePage() {
   // game.appendChild(chatSection);
   root.appendChild(game);
 }
-function chatHandler(e) {
-  e.preventDefault();
-  socket.send(JSON.stringify({ message: e.target.children[0].value }));
-}
+// function chatHandler(e) {
+//   e.preventDefault();
+//   socket.send(JSON.stringify({ message: e.target.children[0].value }));
+// }
 function createConnection() {
   if (socket !== null) return;
   socket = new WebSocket("ws://0.0.0.0:3001"); //this should be updated if needed when needed
@@ -75,11 +75,9 @@ function createConnection() {
         y: data.player.y,
       };
       allPlayers[localPlayer.name] = localPlayer;
-
       rout.navigate("/game");
       game.drawMap();
       renderPlayer(localPlayer);
-
       const chatSection = createHTML(
         "div",
         { className: "chatbox" },
@@ -134,14 +132,27 @@ function createConnection() {
     if (data.type === "powerup-appeared") {
       placePowerUp(data.x, data.y, data.powerUp);
     }
+    if (data.type === "update-lives" && data.name === localPlayer.name) {
+      document.querySelector("#hud-lives").textContent = data.lives;
+    }
+    if (data.type === "power-up-collected" && data.name === localPlayer.name) {
+      document.querySelector("#hud-fire").textContent = data.newStats.firepower;
+      document.querySelector("#hud-bombs").textContent = data.newStats.maxBombs;
+    }
   };
 }
 
 createConnection();
 rout.handleRouteChange();
-
 function gamehandler() {
   root.innerHTML = "";
+  const hud = createHTML("div", { className: "hud" });
+  hud.innerHTML = `
+  <p>❤️ Lives: <span id="hud-lives">${3}</span></p>
+  <p>🔥 Firepower: <span id="hud-fire">${0}</span></p>
+  <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
+`;
+  root.appendChild(hud);
   if (game === undefined) return rout.navigate("/");
   console.log(game);
   // game.drawMap();
@@ -196,9 +207,16 @@ function renderPlayer(player) {
   const index = player.y * 15 + player.x;
   const cell = document.querySelectorAll(".gameContainer > div")[index];
   if (cell) {
-    const playerDiv = createHTML("div", {
-      className: `player player-${player.name}`,
-    });
+    const playerDiv = createHTML(
+      "div",
+      {
+        className: `player player-${player.name}`,
+      },
+      createHTML("div", {
+        className: "name-label",
+        textContent: player.name,
+      })
+    );
     cell.appendChild(playerDiv);
   }
 }
