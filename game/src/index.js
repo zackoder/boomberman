@@ -9,7 +9,7 @@ export const rout = new Router();
 const dom = new Dom();
 const root = dom.getRoot();
 let socket = null;
-let localPlayer = null;
+let localPlayer = {};
 let allPlayers = {};
 let game = null;
 
@@ -58,7 +58,9 @@ function createConnection() {
   socket.onmessage = (e) => {
     const data = JSON.parse(e.data);
     if (!data) return;
-
+    if (data.name) {
+      localPlayer.name = data.name;
+    }
     if (data.error) {
       const errorContainer = createHTML("p", { className: "error" });
       errorContainer.textContent = data.error;
@@ -69,15 +71,30 @@ function createConnection() {
     // Handle initial map and player info
     if (data.type === "init") {
       game = new Game(data.map);
-      localPlayer = {
-        name: data.player.name,
-        x: data.player.x,
-        y: data.player.y,
-      };
-      allPlayers[localPlayer.name] = localPlayer;
+      for (let player of data.players) {
+        console.log(player);
+
+        allPlayers[player.name] = { ...player };
+        // console.log(allPlayers);
+
+        // if (player.name === localPlayer.name) {
+        //   console.log(player);
+        // }
+      }
+      console.log(allPlayers);
+
+      // localPlayer = {
+      //   name: data.player.name,
+      //   x: data.player.x,
+      //   y: data.player.y,
+      // };
+      // allPlayers[localPlayer.name] = localPlayer;
       rout.navigate("/game");
-      game.drawMap();
-      renderPlayer(localPlayer);
+      game.drawMap(allPlayers);
+      for (let [key, value] of Object.entries(allPlayers)) {
+        console.log(key, value);
+        renderPlayer(value);
+      }
       const chatSection = createHTML(
         "div",
         { className: "chatbox" },
@@ -89,7 +106,7 @@ function createConnection() {
         )
       );
       root.appendChild(chatSection);
-      EventListener(".chatForm", "submit", chatHandler);
+      // EventListener(".chatForm", "submit", chatHandler);
     }
 
     // Handle player movement update
@@ -104,6 +121,10 @@ function createConnection() {
         allPlayers[data.name].x = data.x;
         allPlayers[data.name].y = data.y;
       }
+
+      // for (let player in allPlayers) {
+      //   renderPlayer(player);
+      // }
 
       renderPlayer(allPlayers[data.name]);
       if (data.name === localPlayer.name) {
@@ -145,6 +166,8 @@ function createConnection() {
 createConnection();
 rout.handleRouteChange();
 function gamehandler() {
+  if (game === null) return rout.navigate("/");
+
   root.innerHTML = "";
   const hud = createHTML("div", { className: "hud" });
   hud.innerHTML = `
@@ -153,10 +176,8 @@ function gamehandler() {
   <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
 `;
   root.appendChild(hud);
-  if (game === undefined) return rout.navigate("/");
-  console.log(game);
   // game.drawMap();
-  renderPlayer(localPlayer);
+  for (let player in allPlayers) renderPlayer(player);
 }
 // power-UPS section
 function placePowerUp(x, y, kind) {
@@ -203,6 +224,7 @@ function renderPlayer(player) {
   document
     .querySelectorAll(`.player-${player.name}`)
     .forEach((el) => el.remove());
+  console.log(player.y, player.x);
 
   const index = player.y * 15 + player.x;
   const cell = document.querySelectorAll(".gameContainer > div")[index];

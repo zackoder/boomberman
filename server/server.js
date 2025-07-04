@@ -4,7 +4,7 @@ const http = require("http");
 const wsokcet = require("websocket").server;
 const server = http.createServer(app);
 const ws = new wsokcet({ httpServer: server });
-const map = [];
+let map = [];
 const MAX_ROWS = 15;
 const bombs = [];
 const powerUps = [];
@@ -19,7 +19,6 @@ const START_POSITIONS = [
 const players = new Map();
 ws.on("request", (req) => {
   const connection = req.accept(null, req.origin);
-
   connection.on("message", (message) => {
     const data = JSON.parse(message.utf8Data);
     // Assign start position
@@ -27,6 +26,7 @@ ws.on("request", (req) => {
     // console.log(players.get());
     broadcast({ message: data.message });
     if (data.type === "name") {
+      if (players.size === 0 || map.length === 0) createmap();
       const startIndex = players.size;
       if (startIndex >= START_POSITIONS.length) {
         return connection.sendUTF(JSON.stringify({ error: "Room is full" }));
@@ -49,29 +49,29 @@ ws.on("request", (req) => {
       // }
 
       players.set(connection, player);
-      if (map.length === 0) createmap();
       for (let [conn, p] of players) {
         // console.log(p);
         console.log("player", p.name);
 
         // conn.sendUTF(JSON.stringify(message));
       }
+
       let timeout = null;
 
-      if (players.size >= 2 && timeout !== null) {
-        timeout = setTimeout(() => {
-          broadcast({ type: "init", map, player });
-        }, 10 * 1000);
-      }
-      console.log(timeout);
+      // if (players.size >= 2 && timeout !== null) {
+      //   timeout = setTimeout(() => {
+      //     broadcast({ type: "init", map, players: [...players.values()] });
+      //   }, 20 * 1000);
+      // }
+      // console.log(timeout);
 
-      if (players.size === 4) {
+      if (players.size === 1) {
         // broadcast({ start: "game" });
         clearTimeout(timeout);
-        broadcast({ type: "init", map, player });
+        broadcast({ type: "init", map, players: [...players.values()] });
         // connection.sendUTF(JSON.stringify({ type: "init", map, player }));
       }
-      broadcast({ players: players.size });
+      broadcast({ name: data.name, players: players.size });
     }
 
     // Send initial map and player info
@@ -262,6 +262,7 @@ function handleExplosion(x, y, owner) {
 
 function createmap() {
   let row = [];
+  map = [];
   for (let rows = 0; rows < MAX_ROWS; rows++) {
     for (let colomn = 0; colomn < MAX_ROWS; colomn++) {
       if (
@@ -320,7 +321,7 @@ function createmap() {
 }
 // console.log(map);
 
-createmap();
+// createmap();
 
 server.listen(3001, () => {
   console.log("Server running at http://0.0.0.0:3000");
