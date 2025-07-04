@@ -99,8 +99,28 @@ ws.on("request", (req) => {
 
         if (powerUp.type === "firepower") {
           player.firepower++;
+          if (player.firepowerTimeout) clearTimeout(player.firepowerTimeout);
+          player.firepowerTimeout = setTimeout(() => {
+            player.firepower = Math.max(1, player.firepower - 1);
+            broadcast({
+              type: "power-up-expired",
+              name: player.name,
+              stat: "firepower",
+              value: player.firepower,
+            });
+          }, 30000);
         } else if (powerUp.type === "bomb") {
           player.maxBombs++;
+          if (player.maxBombsTimeout) clearTimeout(player.maxBombsTimeout);
+          player.maxBombsTimeout = setTimeout(() => {
+            player.maxBombs = Math.max(1, player.maxBombs - 1);
+            broadcast({
+              type: "power-up-expired",
+              name: player.name,
+              stat: "maxBombs",
+              value: player.maxBombs,
+            });
+          }, 30000);
         }
 
         broadcast({

@@ -139,6 +139,20 @@ function createConnection() {
       document.querySelector("#hud-fire").textContent = data.newStats.firepower;
       document.querySelector("#hud-bombs").textContent = data.newStats.maxBombs;
     }
+    if (data.type === "power-up-expired") {
+      if (data.name === localPlayer.name) {
+        if (data.stat === "firepower") {
+          document.querySelector("#hud-bombs").textContent = data.value;
+
+          localPlayer.firepower = data.value;
+        } else if (data.stat === "maxBombs") {
+          document.querySelector("#hud-bombs").textContent = data.value;
+
+          localPlayer.maxBombs = data.value;
+        }
+        // Update UI to reflect the expired power-up
+      }
+    }
   };
 }
 
