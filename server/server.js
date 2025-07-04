@@ -15,18 +15,32 @@ const START_POSITIONS = [
   { x: 1, y: MAX_ROWS - 2 },
   { x: MAX_ROWS - 2, y: MAX_ROWS - 2 },
 ];
+let gameStat = false;
+// const MAX_PLAYERS = 4;
 
 const players = new Map();
 ws.on("request", (req) => {
   const connection = req.accept(null, req.origin);
+  if (players.size === 0) {
+    gameStat = false;
+  }
   connection.on("message", (message) => {
     const data = JSON.parse(message.utf8Data);
+    if (gameStat && data.type === "name") {
+      connection.sendUTF(
+        JSON.stringify({ error: "the game already started please try again" })
+      );
+      return;
+    }
+
     // Assign start position
     console.log(data.message);
     // console.log(players.get());
     broadcast({ message: data.message });
     if (data.type === "name") {
-      if (players.size === 0 || map.length === 0) createmap();
+      if (map.length === 0) {
+        createmap();
+      }
       const startIndex = players.size;
       if (startIndex >= START_POSITIONS.length) {
         return connection.sendUTF(JSON.stringify({ error: "Room is full" }));
@@ -58,14 +72,15 @@ ws.on("request", (req) => {
 
       let timeout = null;
 
-      // if (players.size >= 2 && timeout !== null) {
-      //   timeout = setTimeout(() => {
-      //     broadcast({ type: "init", map, players: [...players.values()] });
-      //   }, 20 * 1000);
-      // }
-      // console.log(timeout);
+      if (players.size >= 2 && timeout === null) {
+        timeout = setTimeout((currentTime) => {
+          broadcast({ type: "init", map, players: [...players.values()] });
+          console.log(currentTime);
+        }, 20 * 1000);
+      }
 
-      if (players.size === 1) {
+      if (players.size === 4) {
+        gameStat = true;
         // broadcast({ start: "game" });
         clearTimeout(timeout);
         broadcast({ type: "init", map, players: [...players.values()] });
