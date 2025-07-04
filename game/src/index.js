@@ -75,9 +75,11 @@ function createConnection() {
         y: data.player.y,
       };
       allPlayers[localPlayer.name] = localPlayer;
-      // rout.navigate("/game");
-      // game.drawMap();
-      // renderPlayer(localPlayer);
+
+      rout.navigate("/game");
+      game.drawMap();
+      renderPlayer(localPlayer);
+
       const chatSection = createHTML(
         "div",
         { className: "chatbox" },

@@ -17,7 +17,6 @@ const START_POSITIONS = [
 ];
 
 const players = new Map();
-
 ws.on("request", (req) => {
   const connection = req.accept(null, req.origin);
 
@@ -45,14 +44,34 @@ ws.on("request", (req) => {
       };
 
       // Check for name duplication
-      if ([...players.values()].some((p) => p.name === data.name)) {
-        return connection.sendUTF(JSON.stringify({ error: "Name taken" }));
-      }
+      // if ([...players.values()].some((p) => p.name === data.name)) {
+      //   return connection.sendUTF(JSON.stringify({ error: "Name taken" }));
+      // }
 
       players.set(connection, player);
       if (map.length === 0) createmap();
+      for (let [conn, p] of players) {
+        // console.log(p);
+        console.log("player", p.name);
 
-      connection.sendUTF(JSON.stringify({ type: "init", map, player }));
+        // conn.sendUTF(JSON.stringify(message));
+      }
+      let timeout = null;
+
+      if (players.size >= 2 && timeout !== null) {
+        timeout = setTimeout(() => {
+          broadcast({ type: "init", map, player });
+        }, 10 * 1000);
+      }
+      console.log(timeout);
+
+      if (players.size === 4) {
+        // broadcast({ start: "game" });
+        clearTimeout(timeout);
+        broadcast({ type: "init", map, player });
+        // connection.sendUTF(JSON.stringify({ type: "init", map, player }));
+      }
+      broadcast({ players: players.size });
     }
 
     // Send initial map and player info
