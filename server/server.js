@@ -83,7 +83,7 @@ ws.on("request", (req) => {
 
         broadcast({
           type: "player-move",
-          name: p.name,
+          name: player.name,
           x: newX,
           y: newY,
         });
@@ -102,15 +102,11 @@ ws.on("request", (req) => {
       player.activeBombs++;
 
       // Notify clients
-      for (let [conn] of players) {
-        conn.sendUTF(
-          JSON.stringify({
-            type: "bomb-placed",
-            x,
-            y,
-          })
-        );
-      }
+      broadcast({
+        type: "bomb-placed",
+        x,
+        y,
+      });
 
       // Schedule explosion in 2 seconds
       setTimeout(() => {
@@ -123,14 +119,10 @@ ws.on("request", (req) => {
   connection.on("close", () => {
     const leavingPlayer = players.get(connection);
     if (leavingPlayer) {
-      for (let [conn] of players) {
-        conn.sendUTF(
-          JSON.stringify({
-            type: "player-leave",
-            name: leavingPlayer.name,
-          })
-        );
-      }
+      broadcast({
+        type: "player-leave",
+        name: leavingPlayer.name,
+      });
     }
     players.delete(connection);
   });
@@ -185,29 +177,21 @@ function handleExplosion(x, y, owner) {
       );
       if (player.lives <= 0) {
         player.dead = true;
-        for (let [conn] of players) {
-          conn.sendUTF(
-            JSON.stringify({
-              type: "player-dead",
-              name: player.name,
-            })
-          );
-        }
+        broadcast({
+          type: "player-dead",
+          name: player.name,
+        });
       }
     }
   }
 
-  for (let [conn] of players) {
-    conn.sendUTF(
-      JSON.stringify({
-        type: "bomb-exploded",
-        x,
-        y,
-        explosionTiles,
-        map,
-      })
-    );
-  }
+  broadcast({
+    type: "bomb-exploded",
+    x,
+    y,
+    explosionTiles,
+    map,
+  });
 }
 
 // console.log(map);
