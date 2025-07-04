@@ -7,6 +7,8 @@ const ws = new wsokcet({ httpServer: server });
 const map = [];
 const MAX_ROWS = 15;
 const bombs = [];
+const powerUps = [];
+const POWER_UP_TYPES = ["firepower", "bomb"];
 const START_POSITIONS = [
   { x: 1, y: 1 },
   { x: MAX_ROWS - 2, y: 1 },
@@ -39,6 +41,7 @@ ws.on("request", (req) => {
         lives: 3,
         maxBombs: 1,
         activeBombs: 0,
+        firepower: 1,
       };
 
       // Check for name duplication
@@ -86,6 +89,30 @@ ws.on("request", (req) => {
           name: player.name,
           x: newX,
           y: newY,
+        });
+      }
+      const powerUpIndex = powerUps.findIndex(
+        (p) => p.x === player.x && p.y === player.y
+      );
+      if (powerUpIndex !== -1) {
+        const powerUp = powerUps.splice(powerUpIndex, 1)[0];
+
+        if (powerUp.type === "firepower") {
+          player.firepower++;
+        } else if (powerUp.type === "bomb") {
+          player.maxBombs++;
+        }
+
+        broadcast({
+          type: "power-up-collected",
+          name: player.name,
+          x: player.x,
+          y: player.y,
+          powerUp: powerUp.type,
+          newStats: {
+            firepower: player.firepower,
+            maxBombs: player.maxBombs,
+          },
         });
       }
     }
@@ -150,17 +177,35 @@ function handleExplosion(x, y, owner) {
     { dx: -1, dy: 0 },
     { dx: 1, dy: 0 },
   ];
+  // Get owner's firepower
+  const player = [...players.values()].find((p) => p.name === owner);
+  const firepower = player?.firepower || 1;
+
   for (const { dx, dy } of directions) {
-    const nx = x + dx;
-    const ny = y + dy;
-    if (nx < 0 || nx >= MAX_ROWS || ny < 0 || ny >= MAX_ROWS) continue;
+    let nx = x;
+    let ny = y;
+    for (let i = 0; i < firepower; i++) {
+      nx += dx;
+      ny += dy;
+      if (nx < 0 || nx >= MAX_ROWS || ny < 0 || ny >= MAX_ROWS) break;
+      if (map[ny][nx] === 1) break;
+      explosionTiles.push({ x: nx, y: ny });
 
-    if (map[ny][nx] === 1) continue;
-
-    explosionTiles.push({ x: nx, y: ny });
-
-    if (map[ny][nx] === 2) {
-      map[ny][nx] = 0;
+      if (map[ny][nx] === 2) {
+        map[ny][nx] = 0;
+        if (Math.random() < 0.3) {
+          const type =
+            POWER_UP_TYPES[Math.floor(Math.random() * POWER_UP_TYPES.length)];
+          powerUps.push({ x: nx, y: ny, type });
+          broadcast({
+            type: "powerup-appeared",
+            x: nx,
+            y: ny,
+            powerUp: type,
+          });
+        }
+        break;
+      }
     }
   }
 

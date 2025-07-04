@@ -106,6 +106,9 @@ function createConnection() {
       }
 
       renderPlayer(allPlayers[data.name]);
+      if (data.name === localPlayer.name) {
+        checkForPowerUp(data.x, data.y);
+      }
     }
     if (data.type === "player-leave") {
       document
@@ -126,6 +129,9 @@ function createConnection() {
         .forEach((el) => el.remove());
       delete allPlayers[data.name];
     }
+    if (data.type === "powerup-appeared") {
+      placePowerUp(data.x, data.y, data.powerUp);
+    }
   };
 }
 
@@ -138,6 +144,45 @@ function gamehandler() {
   console.log(game);
   // game.drawMap();
   renderPlayer(localPlayer);
+}
+// power-UPS section
+function placePowerUp(x, y, kind) {
+  const index = y * MAX_ROWS + x; // Assuming row-major order
+  const cell = document.querySelectorAll(".gameContainer > div")[index];
+
+  if (cell) {
+    // Remove existing powerup first  if there is any
+    const existing = cell.querySelector(".powerup");
+    if (existing) existing.remove();
+
+    // Create power-up
+    const powerup = createHTML("div", { className: `powerup ${kind}` });
+    powerup.textContent = getPowerupSymbol(kind);
+    cell.appendChild(powerup);
+  }
+}
+function getPowerupSymbol(kind) {
+  switch (kind) {
+    case "bomb":
+      return "B";
+    case "fire":
+      return "F";
+    case "random":
+      return "?";
+    default:
+      return "";
+  }
+}
+function checkForPowerUp(playerX, playerY) {
+  const index = playerY * MAX_ROWS + playerX;
+  const cell = document.querySelectorAll(".gameContainer > div")[index];
+  const powerup = cell.querySelector(".powerup");
+  if (powerup) {
+    const kind = [...powerup.classList].find((cls) => cls !== "powerup");
+    powerup.remove();
+
+    console.log("Power-up collected:", kind);
+  }
 }
 
 function renderPlayer(player) {

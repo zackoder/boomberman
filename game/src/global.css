@@ -118,3 +118,42 @@
   50% { background-color: orange; }
   100% { background-color: yellow; }
 }
+
+/* /////////////////////////////////////////////////// */
+
+/* General Power-up Base Style */
+.powerup {
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 0.8rem;
+  animation: pulse 1s infinite;
+}
+
+/* Specific Power-up Types */
+.powerup.bomb {
+  background-color: #444;
+  border: 2px solid #fff;
+}
+
+.powerup.fire {
+  background-color: #e25822;
+  border: 2px solid #fff;
+}
+
+.powerup.random {
+  background-color: #673ab7;
+  border: 2px solid #fff;
+}
+
+/* Pulse Animation for Visibility */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
