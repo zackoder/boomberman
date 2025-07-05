@@ -39,14 +39,15 @@ function homePage() {
     },
     form
   );
-
+  const playersCounter = createHTML("span", { className: "playersCounter" });
+  game.appendChild(playersCounter);
   root.appendChild(game);
 }
 function chatHandler(e) {
   e.preventDefault();
   socket.send(JSON.stringify({ message: e.target.children[0].value }));
 }
-
+let messages = [];
 function createConnection() {
   if (socket !== null) return;
   socket = new WebSocket("ws://0.0.0.0:3001"); //this should be updated if needed when needed
@@ -73,6 +74,17 @@ function createConnection() {
       errorContainer.textContent = data.error;
       root.appendChild(errorContainer);
       setTimeout(() => errorContainer.remove(), 3000);
+    }
+
+    if (data.message) {
+      const message = createHTML("p", {
+        className: "message",
+        textContent: data.message,
+      });
+      document.querySelector(".gameContainer").appendChild(message);
+    }
+    if (data.players) {
+      document.querySelector(".playersCounter").textContent = data.players;
     }
     if (data.players >= 2) {
       const chatSection = createHTML(

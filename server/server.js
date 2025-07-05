@@ -72,6 +72,7 @@ ws.on("request", (req) => {
 
       let interval = null;
       let currentTime = 20;
+      let waiting = 10;
       if (players.size >= 2 && interval === null) {
         interval = setInterval(() => {
           if (currentTime <= 0) {
@@ -90,12 +91,22 @@ ws.on("request", (req) => {
         }, 1000);
       }
 
+      if (currentTime <= 0) {
+        let beforstart = setInterval(() => {
+          if (players.size < 2) {
+            broadcast({ players: players.size, restart: "restart" });
+            clearInterval(beforstart);
+          }
+          broadcast({ time: currentTime });
+          waiting--;
+        }, 1000);
+      }
+
       if (players.size === 4) {
         gameStat = true;
         // broadcast({ start: "game" });
         // clearTimeout(timeout);
         clearInterval(interval);
-        broadcast({ type: "init", map, players: [...players.values()] });
         // connection.sendUTF(JSON.stringify({ type: "init", map, player }));
       }
       broadcast({ name: data.name, players: players.size });
