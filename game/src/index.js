@@ -26,7 +26,12 @@ function homePage() {
   });
   const input = createHTML("input", { id: "nameInpt", className: "input" });
 
-  const form = createHTML("form", { onsubmit: submitName }, label, input);
+  const form = createHTML(
+    "form",
+    { className: "nickname", onsubmit: submitName },
+    label,
+    input
+  );
   const game = createHTML(
     "div",
     {
@@ -34,23 +39,14 @@ function homePage() {
     },
     form
   );
-  // const chatSection = createHTML(
-  //   "div",
-  //   { className: "chatbox" },
-  //   createHTML("div", { className: "mesagesContainer" }),
-  //   createHTML(
-  //     "form",
-  //     { classList: "chatForm" },
-  //     createHTML("input", { className: "chatInput" })
-  //   )
-  // );
-  // game.appendChild(chatSection);
+
   root.appendChild(game);
 }
-// function chatHandler(e) {
-//   e.preventDefault();
-//   socket.send(JSON.stringify({ message: e.target.children[0].value }));
-// }
+function chatHandler(e) {
+  e.preventDefault();
+  socket.send(JSON.stringify({ message: e.target.children[0].value }));
+}
+
 function createConnection() {
   if (socket !== null) return;
   socket = new WebSocket("ws://0.0.0.0:3001"); //this should be updated if needed when needed
@@ -61,11 +57,36 @@ function createConnection() {
     if (data.name) {
       localPlayer.name = data.name;
     }
+    if (data.time) {
+      const T = document.querySelector(".timer");
+      if (!T) {
+        const timer = createHTML("span", {
+          className: "timer",
+          textContent: data.time,
+        });
+        root.appendChild(timer);
+      }
+      T.textContent = data.time;
+    }
     if (data.error) {
       const errorContainer = createHTML("p", { className: "error" });
       errorContainer.textContent = data.error;
       root.appendChild(errorContainer);
       setTimeout(() => errorContainer.remove(), 3000);
+    }
+    if (data.players >= 2) {
+      const chatSection = createHTML(
+        "div",
+        { className: "chatbox" },
+        createHTML("div", { className: "mesagesContainer" }),
+        createHTML(
+          "form",
+          { onsubmit: chatHandler, classList: "chatForm" },
+          createHTML("input", { className: "chatInput" })
+        )
+      );
+      document.querySelector(".nickname").remove();
+      document.querySelector(".gameContainer").appendChild(chatSection);
     }
 
     // Handle initial map and player info
@@ -95,17 +116,24 @@ function createConnection() {
         console.log(key, value);
         renderPlayer(value);
       }
-      const chatSection = createHTML(
-        "div",
-        { className: "chatbox" },
-        createHTML("div", { className: "mesagesContainer" }),
-        createHTML(
-          "form",
-          { classList: "chatForm" },
-          createHTML("input", { className: "chatInput" })
-        )
-      );
-      root.appendChild(chatSection);
+      // const chatSection = createHTML(
+      //   "div",
+      //   { className: "chatbox" },
+      //   createHTML("div", { className: "mesagesContainer" }),
+      //   createHTML(
+      //     "form",
+      //     { onsubmit: chatHandler, classList: "chatForm" },
+      //     createHTML("input", { className: "chatInput" })
+      //   )
+      // );
+      // root.appendChild(chatSection);
+      const form = document.querySelector(".chatForm");
+      console.log(form);
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        console.log("submit prevented!");
+      });
       // EventListener(".chatForm", "submit", chatHandler);
     }
 
@@ -246,9 +274,11 @@ function renderPlayer(player) {
 function submitName(e) {
   e.preventDefault();
   const nameInput = e.target.querySelector("#nameInpt");
+  // if (nameInput)
   // console.log(ipt);
   if (!nameInput) return;
   const name = nameInput.value.trim();
+  if (!name) return;
   socket.send(JSON.stringify({ type: "name", name }));
 }
 

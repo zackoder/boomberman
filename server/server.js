@@ -70,19 +70,31 @@ ws.on("request", (req) => {
         // conn.sendUTF(JSON.stringify(message));
       }
 
-      let timeout = null;
-
-      if (players.size >= 2 && timeout === null) {
-        timeout = setTimeout((currentTime) => {
-          broadcast({ type: "init", map, players: [...players.values()] });
-          console.log(currentTime);
-        }, 20 * 1000);
+      let interval = null;
+      let currentTime = 20;
+      if (players.size >= 2 && interval === null) {
+        interval = setInterval(() => {
+          if (currentTime <= 0) {
+            clearInterval(interval);
+            broadcast({ type: "init", map, players: [...players.values()] });
+            return;
+          }
+          if (players.size < 2) {
+            clearInterval(interval);
+            currentTime = 20;
+            broadcast({ time: currentTime });
+            return;
+          }
+          currentTime--;
+          broadcast({ time: currentTime });
+        }, 1000);
       }
 
       if (players.size === 4) {
         gameStat = true;
         // broadcast({ start: "game" });
-        clearTimeout(timeout);
+        // clearTimeout(timeout);
+        clearInterval(interval);
         broadcast({ type: "init", map, players: [...players.values()] });
         // connection.sendUTF(JSON.stringify({ type: "init", map, player }));
       }
