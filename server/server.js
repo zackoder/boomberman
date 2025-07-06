@@ -26,6 +26,7 @@ ws.on("request", (req) => {
   }
   connection.on("message", (message) => {
     const data = JSON.parse(message.utf8Data);
+    let currentPlayer = "";
     if (gameStat && data.type === "name") {
       connection.sendUTF(
         JSON.stringify({ error: "the game already started please try again" })
@@ -36,7 +37,10 @@ ws.on("request", (req) => {
     // Assign start position
     console.log(data.message);
     // console.log(players.get());
-    broadcast({ message: data.message });
+    if (data.message) {
+      const player = players.get(connection);
+      broadcast({ sender: player.name, message: data.message });
+    }
     if (data.type === "name") {
       if (map.length === 0) {
         createmap();
@@ -45,7 +49,7 @@ ws.on("request", (req) => {
       if (startIndex >= START_POSITIONS.length) {
         return connection.sendUTF(JSON.stringify({ error: "Room is full" }));
       }
-
+      currentPlayer = data.name;
       const position = START_POSITIONS[startIndex];
       const player = {
         name: data.name,
@@ -75,6 +79,13 @@ ws.on("request", (req) => {
       let waiting = 10;
       if (players.size >= 2 && interval === null) {
         interval = setInterval(() => {
+          if (players.size === 4) {
+            clearInterval(interval);
+            gameStat = true;
+            console.log("game status", gameStat);
+            return;
+          }
+
           if (currentTime <= 0) {
             clearInterval(interval);
             broadcast({ type: "init", map, players: [...players.values()] });
@@ -90,8 +101,9 @@ ws.on("request", (req) => {
           broadcast({ time: currentTime });
         }, 1000);
       }
+      console.log(gameStat, currentTime <= 0);
 
-      if (currentTime <= 0) {
+      if (gameStat || currentTime <= 0) {
         let beforstart = setInterval(() => {
           if (players.size < 2) {
             broadcast({ players: players.size, restart: "restart" });
@@ -102,13 +114,6 @@ ws.on("request", (req) => {
         }, 1000);
       }
 
-      if (players.size === 4) {
-        gameStat = true;
-        // broadcast({ start: "game" });
-        // clearTimeout(timeout);
-        clearInterval(interval);
-        // connection.sendUTF(JSON.stringify({ type: "init", map, player }));
-      }
       broadcast({ name: data.name, players: players.size });
     }
 
