@@ -17,8 +17,7 @@ rout.addrout("/", homePage);
 rout.addrout("/game", gamehandler);
 
 function homePage() {
-  console.log("im heree");
-
+  root.innerHTML = "";
   // onmessage
   const label = createHTML("label", {
     for: "nameInpt",
@@ -47,7 +46,7 @@ function chatHandler(e) {
   e.preventDefault();
   socket.send(JSON.stringify({ message: e.target.children[0].value }));
 }
-let messages = [];
+let allreadyStarted = false;
 function createConnection() {
   if (socket !== null) return;
   socket = new WebSocket("ws://0.0.0.0:3001"); //this should be updated if needed when needed
@@ -55,6 +54,46 @@ function createConnection() {
   socket.onmessage = (e) => {
     const data = JSON.parse(e.data);
     if (!data) return;
+    if (data.gameStarted) {
+      if (allreadyStarted) return;
+      allreadyStarted = true;
+      console.log("started");
+
+      EventListener("document", "keydown", (e) => {
+        const keyMap = {
+          ArrowUp: "up",
+          ArrowDown: "down",
+          ArrowLeft: "left",
+          ArrowRight: "right",
+        };
+
+        if (keyMap[e.key] && socket?.readyState === WebSocket.OPEN) {
+          socket.send(
+            JSON.stringify({
+              type: "move",
+              dir: keyMap[e.key],
+            })
+          );
+        }
+        if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: "drop-bomb" }));
+        }
+      });
+    }
+    if (data.restart) {
+      setTimeout(() => {
+        rout.navigate("/");
+      }, 5000);
+
+      const errorel = document.querySelector(".error");
+      if (!errorel) {
+        const error = createHTML("div", {
+          className: "error",
+          textContent: "the others left befor the game start",
+        });
+        root.prepend(error);
+      }
+    }
     if (data.name) {
       localPlayer.name = data.name;
     }
@@ -66,8 +105,9 @@ function createConnection() {
           textContent: data.time,
         });
         root.appendChild(timer);
+      } else {
+        T.textContent = data.time;
       }
-      T.textContent = data.time;
     }
     if (data.error) {
       const errorContainer = createHTML("p", { className: "error" });
@@ -77,14 +117,18 @@ function createConnection() {
     }
 
     if (data.message) {
+      const container = createHTML("div");
       const message = createHTML("p", {
         className: "message",
-        textContent: data.message,
+        textContent: `from: ${data.sender} ${data.message}`,
       });
-      document.querySelector(".gameContainer").appendChild(message);
+      container.prepend(message);
+      document.querySelector(".gameContainer").appendChild(container);
     }
     if (data.players) {
-      document.querySelector(".playersCounter").textContent = data.players;
+      document.querySelector(
+        ".playersCounter"
+      ).textContent = `${data.info} ${data.players}`;
     }
     if (data.players >= 2) {
       const chatSection = createHTML(
@@ -142,10 +186,6 @@ function createConnection() {
       const form = document.querySelector(".chatForm");
       console.log(form);
 
-      form.addEventListener("submit", function (e) {
-        e.preventDefault();
-        console.log("submit prevented!");
-      });
       // EventListener(".chatForm", "submit", chatHandler);
     }
 
@@ -207,7 +247,6 @@ createConnection();
 rout.handleRouteChange();
 function gamehandler() {
   if (game === null) return rout.navigate("/");
-
   root.innerHTML = "";
   const hud = createHTML("div", { className: "hud" });
   hud.innerHTML = `
@@ -293,27 +332,6 @@ function submitName(e) {
   if (!name) return;
   socket.send(JSON.stringify({ type: "name", name }));
 }
-
-EventListener("document", "keydown", (e) => {
-  const keyMap = {
-    ArrowUp: "up",
-    ArrowDown: "down",
-    ArrowLeft: "left",
-    ArrowRight: "right",
-  };
-
-  if (keyMap[e.key] && socket?.readyState === WebSocket.OPEN) {
-    socket.send(
-      JSON.stringify({
-        type: "move",
-        dir: keyMap[e.key],
-      })
-    );
-  }
-  if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: "drop-bomb" }));
-  }
-});
 
 function animateExplosion(
   centerX,

@@ -15,6 +15,10 @@ const START_POSITIONS = [
   { x: 1, y: MAX_ROWS - 2 },
   { x: MAX_ROWS - 2, y: MAX_ROWS - 2 },
 ];
+const info = [
+  "wait for other players to join",
+  "you will start after a few secends",
+];
 let gameStat = false;
 // const MAX_PLAYERS = 4;
 
@@ -34,13 +38,11 @@ ws.on("request", (req) => {
       return;
     }
 
-    // Assign start position
-    console.log(data.message);
-    // console.log(players.get());
     if (data.message) {
       const player = players.get(connection);
       broadcast({ sender: player.name, message: data.message });
     }
+
     if (data.type === "name") {
       if (map.length === 0) {
         createmap();
@@ -75,25 +77,23 @@ ws.on("request", (req) => {
       }
 
       let interval = null;
-      let currentTime = 20;
+      let currentTime = 300;
       let waiting = 10;
-      if (players.size >= 2 && interval === null) {
+      // let timerStarted = false;
+      console.log("interval condition", players.size >= 2, currentTime === 300);
+
+      if (players.size == 2) {
         interval = setInterval(() => {
-          if (players.size === 4) {
+          console.log(players.size >= 2, interval === null);
+          if (players.size === 4 || currentTime <= 0) {
             clearInterval(interval);
             gameStat = true;
-            console.log("game status", gameStat);
-            return;
-          }
-
-          if (currentTime <= 0) {
-            clearInterval(interval);
+            currentTime = 300;
             broadcast({ type: "init", map, players: [...players.values()] });
-            return;
           }
           if (players.size < 2) {
             clearInterval(interval);
-            currentTime = 20;
+            currentTime = 200;
             broadcast({ time: currentTime });
             return;
           }
@@ -101,20 +101,34 @@ ws.on("request", (req) => {
           broadcast({ time: currentTime });
         }, 1000);
       }
-      console.log(gameStat, currentTime <= 0);
+      let beforstart = null;
+      if (!beforstart) {
+        beforstart = setInterval(() => {
+          if (gameStat) {
+            console.log("conting donw befor the game start", waiting);
 
-      if (gameStat || currentTime <= 0) {
-        let beforstart = setInterval(() => {
-          if (players.size < 2) {
-            broadcast({ players: players.size, restart: "restart" });
-            clearInterval(beforstart);
+            if (players.size < 2) {
+              broadcast({ players: players.size, restart: "restart" });
+              clearInterval(beforstart);
+              return;
+            }
+            if (waiting <= 0) {
+              broadcast({ gameStarted: true });
+              clearInterval(beforstart);
+              return;
+            }
+            broadcast({ time: waiting });
+            waiting--;
           }
-          broadcast({ time: currentTime });
-          waiting--;
         }, 1000);
       }
-
-      broadcast({ name: data.name, players: players.size });
+    }
+    if (!gameStat) {
+      broadcast({
+        name: data.name,
+        players: players.size,
+        info: info[players.size < 2 ? 0 : 1],
+      });
     }
 
     // Send initial map and player info
@@ -220,7 +234,6 @@ ws.on("request", (req) => {
 function broadcast(message) {
   // Send updated position to all players
   for (let [conn, p] of players) {
-    console.log(message);
     conn.sendUTF(JSON.stringify(message));
   }
 }
@@ -335,7 +348,7 @@ function createmap() {
         continue;
       }
       if (
-        (rows === MAX_ROWS - 2 && colomn === MAX_ROWS - 2) ||
+        broadcast(rows === MAX_ROWS - 2 && colomn === MAX_ROWS - 2) ||
         (rows === MAX_ROWS - 2 && colomn === MAX_ROWS - 3) ||
         (rows === MAX_ROWS - 3 && colomn === MAX_ROWS - 2)
       ) {
