@@ -4,6 +4,7 @@ const http = require("http");
 const wsokcet = require("websocket").server;
 const server = http.createServer(app);
 const ws = new wsokcet({ httpServer: server });
+
 let map = [];
 const MAX_ROWS = 15;
 const bombs = [];
@@ -15,6 +16,9 @@ const START_POSITIONS = [
   { x: 1, y: MAX_ROWS - 2 },
   { x: MAX_ROWS - 2, y: MAX_ROWS - 2 },
 ];
+const MAX_FIREPOWER = 2;
+const MAX_BOMBS = 3;
+const POWER_UP_DURATION = 30000;
 const info = [
   "wait for other players to join",
   "you will start after a few secends",
@@ -23,6 +27,8 @@ let gameStat = false;
 // const MAX_PLAYERS = 4;
 
 const players = new Map();
+const PLAYER_COLORS = ["red", "blue", "green", "yellow"];
+
 ws.on("request", (req) => {
   const connection = req.accept(null, req.origin);
   if (players.size === 0) {
@@ -47,6 +53,14 @@ ws.on("request", (req) => {
       if (map.length === 0) {
         createmap();
       }
+      for (let [conn, p] of players) {
+        // console.log(p);
+        console.log("player", p.name);
+        if (data.name === p.name){
+          connection.sendUTF(JSON.stringify({ error: "the player name already existe" }));
+          return
+        }
+      }
       const startIndex = players.size;
       if (startIndex >= START_POSITIONS.length) {
         return connection.sendUTF(JSON.stringify({ error: "Room is full" }));
@@ -61,20 +75,18 @@ ws.on("request", (req) => {
         maxBombs: 1,
         activeBombs: 0,
         firepower: 1,
+        color: PLAYER_COLORS[startIndex],
       };
-
-      // Check for name duplication
-      // if ([...players.values()].some((p) => p.name === data.name)) {
-      //   return connection.sendUTF(JSON.stringify({ error: "Name taken" }));
-      // }
-
       players.set(connection, player);
-      for (let [conn, p] of players) {
-        // console.log(p);
-        console.log("player", p.name);
+      if (map.length === 0) createmap();
+      // connection.sendUTF(
+      //   JSON.stringify({ type: "init", map, players:[...players.values()], player })
+      // );
+      // broadcast({
+      //   type: "newPlayer",
+      //   player,
+      // });
 
-        // conn.sendUTF(JSON.stringify(message));
-      }
 
       let interval = null;
       let currentTime = 300;
@@ -101,20 +113,20 @@ ws.on("request", (req) => {
           broadcast({ time: currentTime });
         }, 1000);
       }
-      let beforstart = null;
-      if (!beforstart) {
-        beforstart = setInterval(() => {
+      let beforestart = null;
+      if (!beforestart) {
+        beforestart = setInterval(() => {
           if (gameStat) {
             console.log("conting donw befor the game start", waiting);
 
             if (players.size < 2) {
               broadcast({ players: players.size, restart: "restart" });
-              clearInterval(beforstart);
+              clearInterval(beforestart);
               return;
             }
             if (waiting <= 0) {
               broadcast({ gameStarted: true });
-              clearInterval(beforstart);
+              clearInterval(beforestart);
               return;
             }
             broadcast({ time: waiting });
@@ -130,7 +142,7 @@ ws.on("request", (req) => {
         info: info[players.size < 2 ? 0 : 1],
       });
     }
-
+    applyPowerUp
     // Send initial map and player info
     if (data.type === "move") {
       if (!players.has(connection)) {
@@ -174,9 +186,9 @@ ws.on("request", (req) => {
         const powerUp = powerUps.splice(powerUpIndex, 1)[0];
 
         if (powerUp.type === "firepower") {
-          player.firepower++;
+          applyPowerUp(player, "firepower", MAX_FIREPOWER, POWER_UP_DURATION);
         } else if (powerUp.type === "bomb") {
-          player.maxBombs++;
+          applyPowerUp(player, "maxBombs", MAX_BOMBS, POWER_UP_DURATION);
         }
 
         broadcast({
@@ -215,7 +227,7 @@ ws.on("request", (req) => {
       setTimeout(() => {
         handleExplosion(x, y, name);
         player.activeBombs--;
-      }, 2000);
+      }, 1200);
     }
   });
 
@@ -228,8 +240,24 @@ ws.on("request", (req) => {
       });
     }
     players.delete(connection);
+ 
   });
 });
+function applyPowerUp(player, stat, max, duration) {
+  if (player[stat] >= max) return;
+  player[stat]++;
+  const timeoutKey = `${stat}Timeout`;
+  if (player[timeoutKey]) clearTimeout(player[timeoutKey]);
+  player[timeoutKey] = setTimeout(() => {
+    player[stat] = Math.max(1, player[stat] - 1);
+    broadcast({
+      type: "power-up-expired",
+      name: player.name,
+      stat,
+      value: player[stat],
+    });
+  }, duration);
+}
 
 function broadcast(message) {
   // Send updated position to all players

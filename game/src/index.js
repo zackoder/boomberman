@@ -60,6 +60,7 @@ function createConnection() {
       console.log("started");
 
       EventListener("document", "keydown", (e) => {
+        e.preventDefault()
         const keyMap = {
           ArrowUp: "up",
           ArrowDown: "down",
@@ -147,65 +148,68 @@ function createConnection() {
 
     // Handle initial map and player info
     if (data.type === "init") {
+
+
+      // data.playersArray.forEach((p) => {
+      //   allPlayers[p.name] = {
+      //     name: p.name,
+      //     x: p.x,
+      //     y: p.y,
+      //     color: p.color,
+      //   };
+      // });
       game = new Game(data.map);
       for (let player of data.players) {
         console.log(player);
-
         allPlayers[player.name] = { ...player };
-        // console.log(allPlayers);
 
-        // if (player.name === localPlayer.name) {
-        //   console.log(player);
-        // }
       }
-      console.log(allPlayers);
-
+      // console.log(allPlayers);
       // localPlayer = {
       //   name: data.player.name,
       //   x: data.player.x,
       //   y: data.player.y,
+      //   color: data.player.color,
       // };
-      // allPlayers[localPlayer.name] = localPlayer;
+      // Object.values(allPlayers).forEach((p) => renderPlayer(p));
       rout.navigate("/game");
       game.drawMap(allPlayers);
       for (let [key, value] of Object.entries(allPlayers)) {
         console.log(key, value);
         renderPlayer(value);
       }
-      // const chatSection = createHTML(
-      //   "div",
-      //   { className: "chatbox" },
-      //   createHTML("div", { className: "mesagesContainer" }),
-      //   createHTML(
-      //     "form",
-      //     { onsubmit: chatHandler, classList: "chatForm" },
-      //     createHTML("input", { className: "chatInput" })
-      //   )
-      // );
-      // root.appendChild(chatSection);
+      game.drawMap();
+      // renderPlayer(localPlayer);
+
       const form = document.querySelector(".chatForm");
       console.log(form);
 
-      // EventListener(".chatForm", "submit", chatHandler);
+
     }
 
-    // Handle player movement update
+
+    // if (data.type === "newPlayer") {
+    //   const newPlayer = data.player;
+    //   if (!allPlayers[newPlayer.name]) {
+    //     allPlayers[newPlayer.name] = {
+    //       name: newPlayer.name,
+    //       x: newPlayer.x,
+    //       y: newPlayer.y,
+    //       color: newPlayer.color,
+    //     };
+    //     renderPlayer(allPlayers[newPlayer.name]);
+    //   }
+    // }
+
     if (data.type === "player-move") {
+      // console.warn("wa dataaaaaa", data);
       if (!allPlayers[data.name]) {
-        allPlayers[data.name] = {
-          name: data.name,
-          x: data.x,
-          y: data.y,
-        };
+        allPlayers[data.name].x = data.x;
+        allPlayers[data.name].y = data.y;
       } else {
         allPlayers[data.name].x = data.x;
         allPlayers[data.name].y = data.y;
       }
-
-      // for (let player in allPlayers) {
-      //   renderPlayer(player);
-      // }
-
       renderPlayer(allPlayers[data.name]);
       if (data.name === localPlayer.name) {
         checkForPowerUp(data.x, data.y);
@@ -221,7 +225,7 @@ function createConnection() {
       drawBomb(data.x, data.y);
     }
     if (data.type === "bomb-exploded") {
-      animateExplosion(data.x, data.y);
+      animateExplosion(data.explosionTiles);
       removeBomb(data.x, data.y);
     }
     if (data.type === "player-dead") {
@@ -236,9 +240,28 @@ function createConnection() {
     if (data.type === "update-lives" && data.name === localPlayer.name) {
       document.querySelector("#hud-lives").textContent = data.lives;
     }
-    if (data.type === "power-up-collected" && data.name === localPlayer.name) {
-      document.querySelector("#hud-fire").textContent = data.newStats.firepower;
-      document.querySelector("#hud-bombs").textContent = data.newStats.maxBombs;
+    if (data.type === "power-up-collected") {
+      removePowerUp(data.x, data.y);
+      if (data.name === localPlayer.name) {
+        document.querySelector("#hud-fire").textContent =
+          data.newStats.firepower;
+        document.querySelector("#hud-bombs").textContent =
+          data.newStats.maxBombs;
+      }
+    }
+    if (data.type === "power-up-expired") {
+      if (data.name === localPlayer.name) {
+        if (data.stat === "firepower") {
+          document.querySelector("#hud-bombs").textContent = data.value;
+
+          localPlayer.firepower = data.value;
+        } else if (data.stat === "maxBombs") {
+          document.querySelector("#hud-bombs").textContent = data.value;
+
+          localPlayer.maxBombs = data.value;
+        }
+
+      }
     }
   };
 }
@@ -255,12 +278,12 @@ function gamehandler() {
   <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
 `;
   root.appendChild(hud);
-  // game.drawMap();
+
   for (let player in allPlayers) renderPlayer(player);
 }
 // power-UPS section
 function placePowerUp(x, y, kind) {
-  const index = y * MAX_ROWS + x; // Assuming row-major order
+  const index = y * MAX_ROWS + x;
   const cell = document.querySelectorAll(".gameContainer > div")[index];
 
   if (cell) {
@@ -278,7 +301,7 @@ function getPowerupSymbol(kind) {
   switch (kind) {
     case "bomb":
       return "B";
-    case "fire":
+    case "firepower":
       return "F";
     case "random":
       return "?";
@@ -312,6 +335,7 @@ function renderPlayer(player) {
       "div",
       {
         className: `player player-${player.name}`,
+        style: `background-color: ${player.color}`,
       },
       createHTML("div", {
         className: "name-label",
@@ -328,37 +352,13 @@ function submitName(e) {
   // if (nameInput)
   // console.log(ipt);
   if (!nameInput) return;
-  const name = nameInput.value.trim();
+  const name = nameInput.value.trim(); // Remove softwalls visually
   if (!name) return;
   socket.send(JSON.stringify({ type: "name", name }));
 }
 
-function animateExplosion(
-  centerX,
-  centerY,
-  directions = ["up", "down", "left", "right"]
-) {
-  const affectedTiles = [{ x: centerX, y: centerY }];
-
-  const dirMap = {
-    up: { dx: 0, dy: -1 },
-    down: { dx: 0, dy: 1 },
-    left: { dx: -1, dy: 0 },
-    right: { dx: 1, dy: 0 },
-  };
-
-  for (const dir of directions) {
-    const { dx, dy } = dirMap[dir];
-    const x = centerX + dx;
-    const y = centerY + dy;
-
-    //  this condition is to prevent going into walls
-    if (x >= 0 && x < MAX_ROWS && y >= 0 && y < MAX_ROWS) {
-      affectedTiles.push({ x, y });
-    }
-  }
-
-  for (const tile of affectedTiles) {
+function animateExplosion(explosionTiles) {
+  for (const tile of explosionTiles) {
     const index = tile.y * MAX_ROWS + tile.x;
     const cell = document.querySelectorAll(".gameContainer > div")[index];
     if (cell) {
@@ -367,7 +367,8 @@ function animateExplosion(
         cell.appendChild(explosion);
         setTimeout(() => explosion.remove(), 500);
       }
-      console.log(cell);
+
+
       if (cell.classList.contains("softwall")) {
         cell.classList.remove("softwall");
         cell.classList.add("emptysell");
@@ -390,4 +391,13 @@ function removeBomb(x, y) {
   if (!cell) return;
   const bomb = cell.querySelector(".bomb");
   if (bomb) bomb.remove();
+}
+
+function removePowerUp(x, y) {
+  const index = y * MAX_ROWS + x;
+  const cell = document.querySelectorAll(".gameContainer > div")[index];
+  if (cell) {
+    const powerup = cell.querySelector(".powerup");
+    if (powerup) powerup.remove();
+  }
 }

@@ -76,7 +76,7 @@
 .player {
   width: 100%;
   height: 100%;
-  background-color: red;
+  /* background-color: red; */
   border-radius: 50%;
   box-shadow: 0 0 5px black;
   transition: transform 0.2s ease;
@@ -121,7 +121,7 @@
 
 /* /////////////////////////////////////////////////// */
 
-/* General Power-up Base Style */
+ 
 .powerup {
   width: 80%;
   height: 80%;
@@ -138,6 +138,7 @@
 /* Specific Power-up Types */
 .powerup.bomb {
   background-color: #444;
+  background-color: #e25822;
   border: 2px solid #fff;
 }
 
