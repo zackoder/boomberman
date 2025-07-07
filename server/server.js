@@ -4,6 +4,7 @@ const http = require("http");
 const wsokcet = require("websocket").server;
 const server = http.createServer(app);
 const ws = new wsokcet({ httpServer: server });
+let startIndex = 0
 const map = [];
 const MAX_ROWS = 15;
 const bombs = [];
@@ -31,7 +32,7 @@ ws.on("request", (req) => {
     // console.log(players.get());
     broadcast({ message: data.message });
     if (data.type === "name") {
-      const startIndex = players.size;
+       startIndex = players.size;
       if (startIndex >= START_POSITIONS.length) {
         return connection.sendUTF(JSON.stringify({ error: "Room is full" }));
       }
@@ -156,6 +157,7 @@ ws.on("request", (req) => {
       });
     }
     players.delete(connection);
+    startIndex = startIndex--
   });
 });
 function applyPowerUp(player, stat, max, duration) {

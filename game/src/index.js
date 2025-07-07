@@ -121,7 +121,7 @@ function createConnection() {
       drawBomb(data.x, data.y);
     }
     if (data.type === "bomb-exploded") {
-      animateExplosion(data.x, data.y);
+      animateExplosion(data.explosionTiles);
       removeBomb(data.x, data.y);
     }
     if (data.type === "player-dead") {
@@ -136,9 +136,14 @@ function createConnection() {
     if (data.type === "update-lives" && data.name === localPlayer.name) {
       document.querySelector("#hud-lives").textContent = data.lives;
     }
-    if (data.type === "power-up-collected" && data.name === localPlayer.name) {
-      document.querySelector("#hud-fire").textContent = data.newStats.firepower;
-      document.querySelector("#hud-bombs").textContent = data.newStats.maxBombs;
+    if (data.type === "power-up-collected") {
+      removePowerUp(data.x, data.y);
+      if (data.name === localPlayer.name) {
+        document.querySelector("#hud-fire").textContent =
+          data.newStats.firepower;
+        document.querySelector("#hud-bombs").textContent =
+          data.newStats.maxBombs;
+      }
     }
     if (data.type === "power-up-expired") {
       if (data.name === localPlayer.name) {
@@ -193,7 +198,7 @@ function getPowerupSymbol(kind) {
   switch (kind) {
     case "bomb":
       return "B";
-    case "fire":
+    case "firepower":
       return "F";
     case "random":
       return "?";
@@ -225,8 +230,8 @@ function renderPlayer(player) {
     const playerDiv = createHTML(
       "div",
       {
-        style: `background-color: ${player.color}`, 
         className: `player player-${player.name}`,
+        style: `background-color: ${player.color}`,
       },
       createHTML("div", {
         className: "name-label",
@@ -267,32 +272,27 @@ EventListener("document", "keydown", (e) => {
   }
 });
 
-function animateExplosion(
-  centerX,
-  centerY,
-  directions = ["up", "down", "left", "right"]
-) {
-  const affectedTiles = [{ x: centerX, y: centerY }];
+function animateExplosion(explosionTiles) {
+  // const affectedTiles = [explosionTiles];
 
-  const dirMap = {
-    up: { dx: 0, dy: -1 },
-    down: { dx: 0, dy: 1 },
-    left: { dx: -1, dy: 0 },
-    right: { dx: 1, dy: 0 },
-  };
+  // const dirMap = {
+  //   up: { dx: 0, dy: -1 },
+  //   down: { dx: 0, dy: 1 },
+  //   left: { dx: -1, dy: 0 },
+  //   right: { dx: 1, dy: 0 },
+  // };
 
-  for (const dir of directions) {
-    const { dx, dy } = dirMap[dir];
-    const x = centerX + dx;
-    const y = centerY + dy;
+  // for (const dir of directions) {
+  //   const { dx, dy } = dirMap[dir];
+  //   const x = centerX + dx;
+  //   const y = centerY + dy;
 
-    //  this condition is to prevent going into walls
-    if (x >= 0 && x < MAX_ROWS && y >= 0 && y < MAX_ROWS) {
-      affectedTiles.push({ x, y });
-    }
-  }
+  //   if (x >= 0 && x < MAX_ROWS && y >= 0 && y < MAX_ROWS) {
+  //     affectedTiles.push({explosionTiles});
+  //   }
+  // }
 
-  for (const tile of affectedTiles) {
+  for (const tile of explosionTiles) {
     const index = tile.y * MAX_ROWS + tile.x;
     const cell = document.querySelectorAll(".gameContainer > div")[index];
     if (cell) {
@@ -301,7 +301,8 @@ function animateExplosion(
         cell.appendChild(explosion);
         setTimeout(() => explosion.remove(), 500);
       }
-      console.log(cell);
+
+      // Remove softwalls visually
       if (cell.classList.contains("softwall")) {
         cell.classList.remove("softwall");
         cell.classList.add("emptysell");
@@ -324,4 +325,13 @@ function removeBomb(x, y) {
   if (!cell) return;
   const bomb = cell.querySelector(".bomb");
   if (bomb) bomb.remove();
+}
+
+function removePowerUp(x, y) {
+  const index = y * MAX_ROWS + x;
+  const cell = document.querySelectorAll(".gameContainer > div")[index];
+  if (cell) {
+    const powerup = cell.querySelector(".powerup");
+    if (powerup) powerup.remove();
+  }
 }
