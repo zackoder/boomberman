@@ -15,8 +15,11 @@ const START_POSITIONS = [
   { x: 1, y: MAX_ROWS - 2 },
   { x: MAX_ROWS - 2, y: MAX_ROWS - 2 },
 ];
-
+const MAX_FIREPOWER = 2;
+const MAX_BOMBS = 3;
+const POWER_UP_DURATION = 30000; 
 const players = new Map();
+const PLAYER_COLORS = ["red", "blue", "green", "yellow"];
 
 ws.on("request", (req) => {
   const connection = req.accept(null, req.origin);
@@ -42,6 +45,7 @@ ws.on("request", (req) => {
         maxBombs: 1,
         activeBombs: 0,
         firepower: 1,
+        color: PLAYER_COLORS[startIndex],
       };
 
       // Check for name duplication
@@ -98,30 +102,10 @@ ws.on("request", (req) => {
         const powerUp = powerUps.splice(powerUpIndex, 1)[0];
 
         if (powerUp.type === "firepower") {
-          player.firepower++;
-          if (player.firepowerTimeout) clearTimeout(player.firepowerTimeout);
-          player.firepowerTimeout = setTimeout(() => {
-            player.firepower = Math.max(1, player.firepower - 1);
-            broadcast({
-              type: "power-up-expired",
-              name: player.name,
-              stat: "firepower",
-              value: player.firepower,
-            });
-          }, 30000);
-        } else if (powerUp.type === "bomb") {
-          player.maxBombs++;
-          if (player.maxBombsTimeout) clearTimeout(player.maxBombsTimeout);
-          player.maxBombsTimeout = setTimeout(() => {
-            player.maxBombs = Math.max(1, player.maxBombs - 1);
-            broadcast({
-              type: "power-up-expired",
-              name: player.name,
-              stat: "maxBombs",
-              value: player.maxBombs,
-            });
-          }, 30000);
-        }
+            applyPowerUp(player, "firepower", MAX_FIREPOWER, POWER_UP_DURATION);
+          } else if (powerUp.type === "bomb") {
+            applyPowerUp(player, "maxBombs", MAX_BOMBS, POWER_UP_DURATION);
+          }
 
         broadcast({
           type: "power-up-collected",
@@ -159,7 +143,7 @@ ws.on("request", (req) => {
       setTimeout(() => {
         handleExplosion(x, y, name);
         player.activeBombs--;
-      }, 2000);
+      }, 1200);
     }
   });
 
@@ -174,6 +158,22 @@ ws.on("request", (req) => {
     players.delete(connection);
   });
 });
+function applyPowerUp(player, stat, max, duration) {
+    if (player[stat] >= max) return;
+    player[stat]++;
+    const timeoutKey = `${stat}Timeout`;
+    if (player[timeoutKey]) clearTimeout(player[timeoutKey]);
+    player[timeoutKey] = setTimeout(() => {
+      player[stat] = Math.max(1, player[stat] - 1);
+      broadcast({
+        type: "power-up-expired",
+        name: player.name,
+        stat,
+        value: player[stat],
+      });
+    }, duration);
+  }
+  
 
 function broadcast(message) {
   // Send updated position to all players

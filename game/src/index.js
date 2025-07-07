@@ -73,6 +73,7 @@ function createConnection() {
         name: data.player.name,
         x: data.player.x,
         y: data.player.y,
+        color: data.player.color,
       };
       allPlayers[localPlayer.name] = localPlayer;
       rout.navigate("/game");
@@ -224,6 +225,7 @@ function renderPlayer(player) {
     const playerDiv = createHTML(
       "div",
       {
+        style: `background-color: ${player.color}`, 
         className: `player player-${player.name}`,
       },
       createHTML("div", {
