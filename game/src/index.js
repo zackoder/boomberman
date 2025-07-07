@@ -68,6 +68,16 @@ function createConnection() {
 
     // Handle initial map and player info
     if (data.type === "init") {
+      console.log(data.players);
+     
+      data.playersArray.forEach((p) => {
+        allPlayers[p.name] = {
+          name: p.name,
+          x: p.x,
+          y: p.y,
+          color: p.color,
+        };
+      });
       game = new Game(data.map);
       localPlayer = {
         name: data.player.name,
@@ -75,10 +85,11 @@ function createConnection() {
         y: data.player.y,
         color: data.player.color,
       };
-      allPlayers[localPlayer.name] = localPlayer;
+      Object.values(allPlayers).forEach((p) => renderPlayer(p));
       rout.navigate("/game");
       game.drawMap();
       renderPlayer(localPlayer);
+   
       // const chatSection = createHTML(
       //   "div",
       //   { className: "chatbox" },
@@ -94,13 +105,31 @@ function createConnection() {
     }
 
     // Handle player movement update
-    if (data.type === "player-move") {
-      if (!allPlayers[data.name]) {
-        allPlayers[data.name] = {
-          name: data.name,
-          x: data.x,
-          y: data.y,
+    if (data.type === "newPlayer") {
+      const newPlayer = data.player;
+      if (!allPlayers[newPlayer.name]) {
+        allPlayers[newPlayer.name] = {
+          name: newPlayer.name,
+          x: newPlayer.x,
+          y: newPlayer.y,
+          color: newPlayer.color,
         };
+        renderPlayer(allPlayers[newPlayer.name]);
+      }
+    }
+
+    if (data.type === "player-move") {
+      // console.warn("wa dataaaaaa", data);
+      if (!allPlayers[data.name]) {
+        allPlayers[data.name].x = data.x;
+        allPlayers[data.name].y = data.y;
+
+        // = {
+        //   name: data.name,
+        //   x: data.x,
+        //   y: data.y,
+        //   color: data.pla
+        // };
       } else {
         allPlayers[data.name].x = data.x;
         allPlayers[data.name].y = data.y;

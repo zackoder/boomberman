@@ -1,10 +1,11 @@
 const express = require("express");
 const app = express();
 const http = require("http");
+const { type } = require("os");
 const wsokcet = require("websocket").server;
 const server = http.createServer(app);
 const ws = new wsokcet({ httpServer: server });
-let startIndex = 0
+let startIndex = 0;
 const map = [];
 const MAX_ROWS = 15;
 const bombs = [];
@@ -18,7 +19,7 @@ const START_POSITIONS = [
 ];
 const MAX_FIREPOWER = 2;
 const MAX_BOMBS = 3;
-const POWER_UP_DURATION = 30000; 
+const POWER_UP_DURATION = 30000;
 const players = new Map();
 const PLAYER_COLORS = ["red", "blue", "green", "yellow"];
 
@@ -32,7 +33,7 @@ ws.on("request", (req) => {
     // console.log(players.get());
     broadcast({ message: data.message });
     if (data.type === "name") {
-       startIndex = players.size;
+      startIndex = players.size;
       if (startIndex >= START_POSITIONS.length) {
         return connection.sendUTF(JSON.stringify({ error: "Room is full" }));
       }
@@ -56,8 +57,15 @@ ws.on("request", (req) => {
 
       players.set(connection, player);
       if (map.length === 0) createmap();
+      const playersArray = [...players.values()]
 
-      connection.sendUTF(JSON.stringify({ type: "init", map, player }));
+      connection.sendUTF(
+        JSON.stringify({ type: "init", map, playersArray , player })
+      );
+      broadcast({
+        type: "newPlayer",
+        player,
+      });
     }
 
     // Send initial map and player info
@@ -103,10 +111,10 @@ ws.on("request", (req) => {
         const powerUp = powerUps.splice(powerUpIndex, 1)[0];
 
         if (powerUp.type === "firepower") {
-            applyPowerUp(player, "firepower", MAX_FIREPOWER, POWER_UP_DURATION);
-          } else if (powerUp.type === "bomb") {
-            applyPowerUp(player, "maxBombs", MAX_BOMBS, POWER_UP_DURATION);
-          }
+          applyPowerUp(player, "firepower", MAX_FIREPOWER, POWER_UP_DURATION);
+        } else if (powerUp.type === "bomb") {
+          applyPowerUp(player, "maxBombs", MAX_BOMBS, POWER_UP_DURATION);
+        }
 
         broadcast({
           type: "power-up-collected",
@@ -157,25 +165,24 @@ ws.on("request", (req) => {
       });
     }
     players.delete(connection);
-    startIndex = startIndex--
+    startIndex = startIndex--;
   });
 });
 function applyPowerUp(player, stat, max, duration) {
-    if (player[stat] >= max) return;
-    player[stat]++;
-    const timeoutKey = `${stat}Timeout`;
-    if (player[timeoutKey]) clearTimeout(player[timeoutKey]);
-    player[timeoutKey] = setTimeout(() => {
-      player[stat] = Math.max(1, player[stat] - 1);
-      broadcast({
-        type: "power-up-expired",
-        name: player.name,
-        stat,
-        value: player[stat],
-      });
-    }, duration);
-  }
-  
+  if (player[stat] >= max) return;
+  player[stat]++;
+  const timeoutKey = `${stat}Timeout`;
+  if (player[timeoutKey]) clearTimeout(player[timeoutKey]);
+  player[timeoutKey] = setTimeout(() => {
+    player[stat] = Math.max(1, player[stat] - 1);
+    broadcast({
+      type: "power-up-expired",
+      name: player.name,
+      stat,
+      value: player[stat],
+    });
+  }, duration);
+}
 
 function broadcast(message) {
   // Send updated position to all players
