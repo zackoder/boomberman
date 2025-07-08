@@ -56,9 +56,11 @@ ws.on("request", (req) => {
       for (let [conn, p] of players) {
         // console.log(p);
         console.log("player", p.name);
-        if (data.name === p.name){
-          connection.sendUTF(JSON.stringify({ error: "the player name already existe" }));
-          return
+        if (data.name === p.name) {
+          connection.sendUTF(
+            JSON.stringify({ error: "the player name already existe" })
+          );
+          return;
         }
       }
       const startIndex = players.size;
@@ -79,19 +81,10 @@ ws.on("request", (req) => {
       };
       players.set(connection, player);
       if (map.length === 0) createmap();
-      // connection.sendUTF(
-      //   JSON.stringify({ type: "init", map, players:[...players.values()], player })
-      // );
-      // broadcast({
-      //   type: "newPlayer",
-      //   player,
-      // });
-
 
       let interval = null;
       let currentTime = 300;
       let waiting = 10;
-      // let timerStarted = false;
       console.log("interval condition", players.size >= 2, currentTime === 300);
 
       if (players.size == 2) {
@@ -142,7 +135,7 @@ ws.on("request", (req) => {
         info: info[players.size < 2 ? 0 : 1],
       });
     }
-    applyPowerUp
+
     // Send initial map and player info
     if (data.type === "move") {
       if (!players.has(connection)) {
@@ -216,14 +209,14 @@ ws.on("request", (req) => {
       bombs.push({ x, y, owner: name });
       player.activeBombs++;
 
-      // Notify clients
+      // notify clients that the bomb is placed by a player !!!!!!!
       broadcast({
         type: "bomb-placed",
         x,
         y,
       });
 
-      // Schedule explosion in 2 seconds
+      // set a timeout to the explosion
       setTimeout(() => {
         handleExplosion(x, y, name);
         player.activeBombs--;
@@ -240,7 +233,6 @@ ws.on("request", (req) => {
       });
     }
     players.delete(connection);
- 
   });
 });
 function applyPowerUp(player, stat, max, duration) {
@@ -342,8 +334,6 @@ function handleExplosion(x, y, owner) {
   });
 }
 
-// console.log(map);
-
 function createmap() {
   let row = [];
   map = [];
@@ -400,13 +390,7 @@ function createmap() {
     map.push(row);
     row = [];
   }
-
-  // console.log(row.length);
 }
-// console.log(map);
-
-// createmap();
-
 server.listen(3001, () => {
   console.log("Server running at http://0.0.0.0:3000");
 });

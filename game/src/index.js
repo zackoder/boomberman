@@ -46,21 +46,22 @@ function chatHandler(e) {
   e.preventDefault();
   socket.send(JSON.stringify({ message: e.target.children[0].value }));
 }
-let allreadyStarted = false;
+let alreadyStarted = false;
 function createConnection() {
   if (socket !== null) return;
-  socket = new WebSocket("ws://0.0.0.0:3001"); //this should be updated if needed when needed
+  //this should be updated if needed when needed depending on which machine we're working with
+  socket = new WebSocket("ws://0.0.0.0:3001");
 
   socket.onmessage = (e) => {
     const data = JSON.parse(e.data);
     if (!data) return;
     if (data.gameStarted) {
-      if (allreadyStarted) return;
-      allreadyStarted = true;
+      if (alreadyStarted) return;
+      alreadyStarted = true;
       console.log("started");
 
       EventListener("document", "keydown", (e) => {
-        e.preventDefault()
+        e.preventDefault();
         const keyMap = {
           ArrowUp: "up",
           ArrowDown: "down",
@@ -135,7 +136,7 @@ function createConnection() {
       const chatSection = createHTML(
         "div",
         { className: "chatbox" },
-        createHTML("div", { className: "mesagesContainer" }),
+        createHTML("div", { className: "messagesContainer" }),
         createHTML(
           "form",
           { onsubmit: chatHandler, classList: "chatForm" },
@@ -148,68 +149,27 @@ function createConnection() {
 
     // Handle initial map and player info
     if (data.type === "init") {
-
-
-      // data.playersArray.forEach((p) => {
-      //   allPlayers[p.name] = {
-      //     name: p.name,
-      //     x: p.x,
-      //     y: p.y,
-      //     color: p.color,
-      //   };
-      // });
       game = new Game(data.map);
       for (let player of data.players) {
         console.log(player);
         allPlayers[player.name] = { ...player };
-
       }
-      // console.log(allPlayers);
-      // localPlayer = {
-      //   name: data.player.name,
-      //   x: data.player.x,
-      //   y: data.player.y,
-      //   color: data.player.color,
-      // };
-      // Object.values(allPlayers).forEach((p) => renderPlayer(p));
+
       rout.navigate("/game");
       game.drawMap(allPlayers);
       for (let [key, value] of Object.entries(allPlayers)) {
         console.log(key, value);
         renderPlayer(value);
       }
-      game.drawMap();
-      // renderPlayer(localPlayer);
 
       const form = document.querySelector(".chatForm");
       console.log(form);
-
-
     }
-
-
-    // if (data.type === "newPlayer") {
-    //   const newPlayer = data.player;
-    //   if (!allPlayers[newPlayer.name]) {
-    //     allPlayers[newPlayer.name] = {
-    //       name: newPlayer.name,
-    //       x: newPlayer.x,
-    //       y: newPlayer.y,
-    //       color: newPlayer.color,
-    //     };
-    //     renderPlayer(allPlayers[newPlayer.name]);
-    //   }
-    // }
-
     if (data.type === "player-move") {
-      // console.warn("wa dataaaaaa", data);
-      if (!allPlayers[data.name]) {
-        allPlayers[data.name].x = data.x;
-        allPlayers[data.name].y = data.y;
-      } else {
-        allPlayers[data.name].x = data.x;
-        allPlayers[data.name].y = data.y;
-      }
+      if (!allPlayers[data.name]) return;
+      allPlayers[data.name].x = data.x;
+      allPlayers[data.name].y = data.y;
+
       renderPlayer(allPlayers[data.name]);
       if (data.name === localPlayer.name) {
         checkForPowerUp(data.x, data.y);
@@ -252,15 +212,12 @@ function createConnection() {
     if (data.type === "power-up-expired") {
       if (data.name === localPlayer.name) {
         if (data.stat === "firepower") {
-          document.querySelector("#hud-bombs").textContent = data.value;
-
+          document.querySelector("#hud-fire").textContent = data.value;
           localPlayer.firepower = data.value;
         } else if (data.stat === "maxBombs") {
           document.querySelector("#hud-bombs").textContent = data.value;
-
           localPlayer.maxBombs = data.value;
         }
-
       }
     }
   };
@@ -279,7 +236,7 @@ function gamehandler() {
 `;
   root.appendChild(hud);
 
-  for (let player in allPlayers) renderPlayer(player);
+  for (let player in allPlayers) renderPlayer(allPlayers[player]);
 }
 // power-UPS section
 function placePowerUp(x, y, kind) {
@@ -328,7 +285,7 @@ function renderPlayer(player) {
     .forEach((el) => el.remove());
   console.log(player.y, player.x);
 
-  const index = player.y * 15 + player.x;
+  const index = player.y * MAX_ROWS + player.x;
   const cell = document.querySelectorAll(".gameContainer > div")[index];
   if (cell) {
     const playerDiv = createHTML(
@@ -367,7 +324,6 @@ function animateExplosion(explosionTiles) {
         cell.appendChild(explosion);
         setTimeout(() => explosion.remove(), 500);
       }
-
 
       if (cell.classList.contains("softwall")) {
         cell.classList.remove("softwall");
