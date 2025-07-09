@@ -191,3 +191,21 @@
   color: white;
 }
 /* Player Name Label */
+
+
+.game-over {
+  text-align: center;
+  padding: 2rem;
+  background: #222;
+  color: #fff;
+  border-radius: 10px;
+}
+.restart-btn {
+  padding: 0.5rem 1rem;
+  background: #28a745;
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  margin-top: 1rem;
+  cursor: pointer;
+}

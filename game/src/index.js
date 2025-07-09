@@ -220,6 +220,9 @@ function createConnection() {
         }
       }
     }
+    if (data.type === "game-over") {
+      gameOver(data.winner);
+    }
   };
 }
 
@@ -356,4 +359,37 @@ function removePowerUp(x, y) {
     const powerup = cell.querySelector(".powerup");
     if (powerup) powerup.remove();
   }
+}
+
+function gameOver(winnerName = "Unknown") {
+  // Stop input (optional: remove key listeners if you have added custom ones elsewhere)
+  alreadyStarted = false;
+
+  // Clear players from map
+  for (let player in allPlayers) {
+    document.querySelectorAll(`.player-${player}`).forEach((el) => el.remove());
+  }
+  allPlayers = {}; // Clear players
+  localPlayer = {}; // Reset local player
+
+  // Show Game Over Message
+  const gameOverScreen = createHTML("div", {
+    className: "game-over",
+  });
+
+  const message = createHTML("h2", {
+     textContent: winnerName ?`🏆 Game Over! Winner: ${winnerName}`
+     : "🏁 Game Over! It's a draw!",
+  });
+
+  const button = createHTML(
+    "button",
+    { className: "restart-btn", onclick: () => rout.navigate("/") },
+    createHTML("span", { textContent: "Return to Lobby" })
+  );
+
+  gameOverScreen.appendChild(message);
+  gameOverScreen.appendChild(button);
+  root.innerHTML = ""; // Clear game
+  root.appendChild(gameOverScreen);
 }
