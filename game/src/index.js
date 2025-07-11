@@ -3,8 +3,9 @@ import { Router } from "./core/router.js";
 import { Dom } from "./core/vdom.js";
 import { Game } from "./game.js";
 import { EventListener } from "./core/events.js";
+const throttle = require("../../server/Functions/helperFunctions.js");
+let moveDelay = 200; 
 const MAX_ROWS = 15;
-
 export const rout = new Router();
 const dom = new Dom();
 const root = dom.getRoot();
@@ -60,8 +61,7 @@ function createConnection() {
       alreadyStarted = true;
       console.log("started");
 
-      EventListener("document", "keydown", (e) => {
-        e.preventDefault();
+      const throttledMove = throttle((e) => {
         const keyMap = {
           ArrowUp: "up",
           ArrowDown: "down",
@@ -77,9 +77,14 @@ function createConnection() {
             })
           );
         }
+
         if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
           socket.send(JSON.stringify({ type: "drop-bomb" }));
         }
+      }, moveDelay);
+      EventListener("document", "keydown", (e) => {
+        e.preventDefault();
+        throttledMove(e);
       });
     }
     if (data.restart) {
@@ -234,7 +239,7 @@ function gamehandler() {
   const hud = createHTML("div", { className: "hud" });
   hud.innerHTML = `
   <p>❤️ Lives: <span id="hud-lives">${3}</span></p>
-  <p>🔥 Firepower: <span id="hud-fire">${0}</span></p>
+  <p>🔥 Firepower: <span id="hud-fire">${1}</span></p>
   <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
 `;
   root.appendChild(hud);
@@ -312,7 +317,7 @@ function submitName(e) {
   // if (nameInput)
   // console.log(ipt);
   if (!nameInput) return;
-  const name = nameInput.value.trim(); // Remove softwalls visually
+  const name = nameInput.value.trim();
   if (!name) return;
   socket.send(JSON.stringify({ type: "name", name }));
 }
@@ -362,24 +367,21 @@ function removePowerUp(x, y) {
 }
 
 function gameOver(winnerName = "Unknown") {
-  // Stop input (optional: remove key listeners if you have added custom ones elsewhere)
   alreadyStarted = false;
-
-  // Clear players from map
   for (let player in allPlayers) {
     document.querySelectorAll(`.player-${player}`).forEach((el) => el.remove());
   }
-  allPlayers = {}; // Clear players
-  localPlayer = {}; // Reset local player
+  allPlayers = {};
+  localPlayer = {};
 
-  // Show Game Over Message
   const gameOverScreen = createHTML("div", {
     className: "game-over",
   });
 
   const message = createHTML("h2", {
-     textContent: winnerName ?`🏆 Game Over! Winner: ${winnerName}`
-     : "🏁 Game Over! It's a draw!",
+    textContent: winnerName
+      ? `🏆 Game Over! Winner: ${winnerName}`
+      : "☠️ Game Over! You Lost!",
   });
 
   const button = createHTML(
@@ -390,6 +392,6 @@ function gameOver(winnerName = "Unknown") {
 
   gameOverScreen.appendChild(message);
   gameOverScreen.appendChild(button);
-  root.innerHTML = ""; // Clear game
+  root.innerHTML = "";
   root.appendChild(gameOverScreen);
 }

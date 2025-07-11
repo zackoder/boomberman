@@ -25,8 +25,7 @@ const info = [
   "you will start after a few secends",
 ];
 let gameStat = false;
-// const MAX_PLAYERS = 4;
-
+ 
 const players = new Map();
 const PLAYER_COLORS = ["red", "blue", "green", "yellow"];
 

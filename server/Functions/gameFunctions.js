@@ -48,7 +48,7 @@ function HandleExplosion(map, x, y, owner, players,bombs) {
     }
   }
 
-  const deadConnections = [];
+  // const deadConnections = [];
   for (let [conn, player] of players) {
     if (explosionTiles.some((t) => t.x === player.x && t.y === player.y)) {
       player.lives--;
@@ -65,17 +65,16 @@ function HandleExplosion(map, x, y, owner, players,bombs) {
           type: "player-dead",
           name: player.name,
         },players);
-        deadConnections.push(conn);
+        conn.sendUTF( JSON.stringify({restart:"restart", message:"hhh you lose"}))
+        // deadConnections.push(conn);
       }
     }
   }
 
-  // Remove dead players after iteration
-  for (let conn of deadConnections) {
-    players.delete(conn);
-  }
+  // for (let conn of deadConnections) {
+  //   players.delete(conn);
+  // }
 
-  // Check for game over
   const alivePlayers = [...players.values()].filter((p) => !p.dead);
   if (alivePlayers.length <= 1) {
     const winner = alivePlayers[0]?.name || null;
@@ -102,15 +101,13 @@ function applyPowerUp(player, stat, max, duration,players) {
   const timeoutKey = `${stat}Timeout`;
   if (player[timeoutKey]) clearTimeout(player[timeoutKey]);
   player[timeoutKey] = setTimeout(() => {
-    player[stat] = Math.max(1, player[stat] - 1);
-    // console.log(players);
+    player[stat] = 1;
     broadcast({
       type: "power-up-expired",
       name: player.name,
       stat,
       value: player[stat],
     },players);
-    // console.log(players);
     
   }, duration);
 }
