@@ -1,8 +1,8 @@
  
 // console.log("still here");
+// we create an object to store the events with its call back function
 const EventRegistry = {}; // Key: "elementId_eventType" → [handlers]
 let idCounter = 0;
-
 // Events your framework supports
 const SupportedEvents = [
   "click",
@@ -21,7 +21,6 @@ const SupportedEvents = [
 ];
 
 function getElementId(element) {
-     
   if (element === document) return "document";
   if (element === window) return "window";
 
