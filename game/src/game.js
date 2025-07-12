@@ -1,3 +1,5 @@
+import { jsx, root } from "./core/dom.js";
+import { render } from "./core/render.js";
 
 export class Game {
   constructor(map) {
@@ -8,21 +10,22 @@ export class Game {
     for (let row = 0; row < this.map.length; row++) {
       for (let column = 0; column < this.map.length; column++) {
         if (this.map[row][column] === 0) {
-          children.push(createHTML("div", { className: `emptysell` }));
+          children.push(jsx("div", { className: `emptysell` }));
         }
         if (this.map[row][column] === 1) {
-          children.push(createHTML("div", { className: `wall` }));
+          children.push(jsx("div", { className: `wall` }));
         }
         if (this.map[row][column] === 2) {
-          children.push(createHTML("div", { className: `softwall` }));
+          children.push(jsx("div", { className: `softwall` }));
         }
       }
     }
-    const gameContainer = createHTML(
+    const gameContainer = jsx(
       "div",
       { className: "gameContainer" },
       ...children
     );
-    root.append(gameContainer);
+    // root.append(gameContainer);
+    render(root, gameContainer);
   }
 }

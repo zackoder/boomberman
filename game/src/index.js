@@ -2,7 +2,9 @@ import { Router } from "./core/router.js";
 import { Game } from "./game.js";
 import { EventListener } from "./core/events.js";
 import { throttle } from "./functions/helperfunctions.js";
-import { jsx } from "./core/dom.js";
+import { jsx, root } from "./core/dom.js";
+import { render } from "./core/render.js";
+// import { render } from "./core/render.js";
 
 let moveDelay = 200;
 const MAX_ROWS = 15;
@@ -16,30 +18,43 @@ rout.addrout("/", homePage);
 rout.addrout("/game", gamehandler);
 
 function homePage() {
+  // clear the root container
   root.innerHTML = "";
-  // onmessage
+  // create label
   const label = jsx("label", {
     for: "nameInpt",
     textContent: "enter your name:",
   });
+  //create input
   const input = jsx("input", { id: "nameInpt", className: "input" });
 
+  //create form with label and input as children
   const form = jsx(
     "form",
     { className: "nickname", onsubmit: submitName },
     label,
     input
   );
+  // const game = jsx(
+  //   "div",
+  //   {
+  //     className: "gameContainer",
+  //   },
+  //   form
+  // );
+  const playersCounter = jsx("span", { className: "playersCounter" });
   const game = jsx(
     "div",
     {
       className: "gameContainer",
     },
-    form
+    form,
+    playersCounter
   );
-  const playersCounter = jsx("span", { className: "playersCounter" });
-  game.appendChild(playersCounter);
-  root.appendChild(game);
+  // Render game container into root
+  render(root, game);
+  // const app = jsx(root, {}, game);
+  // root.appendChild(game);
 }
 function chatHandler(e) {
   e.preventDefault();

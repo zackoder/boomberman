@@ -16,9 +16,12 @@ export class Router {
 
   handleRouteChange() {
     const path = window.location.pathname;
+    console.log("path--------", path);
 
     if (this.routers[path]) {
       const Vdom = this.routers[path]();
+      console.log("Vdom---------", Vdom);
+
       UpdateDOM(root.children[0], currentVdom, Vdom);
       updateVdom(Vdom);
     } else {
@@ -37,4 +40,4 @@ export class Router {
   }
 }
 
-export const rout = new Router();
+// export const rout = new Router();
