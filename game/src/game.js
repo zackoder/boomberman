@@ -1,4 +1,3 @@
-import { createHTML } from "./core/element.js";
 
 export class Game {
   constructor(map) {

@@ -1,14 +1,12 @@
-import { createHTML } from "./core/element.js";
 import { Router } from "./core/router.js";
-import { Dom } from "./core/vdom.js";
 import { Game } from "./game.js";
 import { EventListener } from "./core/events.js";
 import { throttle } from "./functions/helperfunctions.js";
+import { jsx } from "./core/dom.js";
+
 let moveDelay = 200;
 const MAX_ROWS = 15;
 export const rout = new Router();
-const dom = new Dom();
-const root = dom.getRoot();
 let socket = null;
 let localPlayer = {};
 let allPlayers = {};
@@ -20,26 +18,26 @@ rout.addrout("/game", gamehandler);
 function homePage() {
   root.innerHTML = "";
   // onmessage
-  const label = createHTML("label", {
+  const label = jsx("label", {
     for: "nameInpt",
     textContent: "enter your name:",
   });
-  const input = createHTML("input", { id: "nameInpt", className: "input" });
+  const input = jsx("input", { id: "nameInpt", className: "input" });
 
-  const form = createHTML(
+  const form = jsx(
     "form",
     { className: "nickname", onsubmit: submitName },
     label,
     input
   );
-  const game = createHTML(
+  const game = jsx(
     "div",
     {
       className: "gameContainer",
     },
     form
   );
-  const playersCounter = createHTML("span", { className: "playersCounter" });
+  const playersCounter = jsx("span", { className: "playersCounter" });
   game.appendChild(playersCounter);
   root.appendChild(game);
 }
@@ -110,7 +108,7 @@ function createConnection() {
 
       const errorel = document.querySelector(".error");
       if (!errorel) {
-        const error = createHTML("div", {
+        const error = jsx("div", {
           className: "error",
           textContent: "the others left befor the game start",
         });
@@ -123,7 +121,7 @@ function createConnection() {
     if (data.time) {
       const T = document.querySelector(".timer");
       if (!T) {
-        const timer = createHTML("span", {
+        const timer = jsx("span", {
           className: "timer",
           textContent: data.time,
         });
@@ -133,15 +131,15 @@ function createConnection() {
       }
     }
     if (data.error) {
-      const errorContainer = createHTML("p", { className: "error" });
+      const errorContainer = jsx("p", { className: "error" });
       errorContainer.textContent = data.error;
       root.appendChild(errorContainer);
       setTimeout(() => errorContainer.remove(), 3000);
     }
 
     if (data.message) {
-      const container = createHTML("div");
-      const message = createHTML("p", {
+      const container = jsx("div");
+      const message = jsx("p", {
         className: "message",
         textContent: `from: ${data.sender} ${data.message}`,
       });
@@ -154,14 +152,14 @@ function createConnection() {
       ).textContent = `${data.info} ${data.players}`;
     }
     if (data.players >= 2) {
-      const chatSection = createHTML(
+      const chatSection = jsx(
         "div",
         { className: "chatbox" },
-        createHTML("div", { className: "messagesContainer" }),
-        createHTML(
+        jsx("div", { className: "messagesContainer" }),
+        jsx(
           "form",
           { onsubmit: chatHandler, classList: "chatForm" },
-          createHTML("input", { className: "chatInput" })
+          jsx("input", { className: "chatInput" })
         )
       );
       document.querySelector(".nickname").remove();
@@ -268,7 +266,7 @@ rout.handleRouteChange();
 function gamehandler() {
   if (game === null) return rout.navigate("/");
   root.innerHTML = "";
-  const hud = createHTML("div", { className: "hud" });
+  const hud = jsx("div", { className: "hud" });
   hud.innerHTML = `
   <p>❤️ Lives: <span id="hud-lives">${3}</span></p>
   <p>🔥 Firepower: <span id="hud-fire">${1}</span></p>
@@ -290,7 +288,7 @@ function placePowerUp(x, y, kind) {
     if (existing) existing.remove();
 
     // Create power-up
-    const powerup = createHTML("div", { className: `powerup ${kind}` });
+    const powerup = jsx("div", { className: `powerup ${kind}` });
     powerup.textContent = getPowerupSymbol(kind);
     cell.appendChild(powerup);
   }
@@ -331,13 +329,13 @@ function renderPlayer(player) {
   const index = player.y * MAX_ROWS + player.x;
   const cell = document.querySelectorAll(".gameContainer > div")[index];
   if (cell) {
-    const playerDiv = createHTML(
+    const playerDiv = jsx(
       "div",
       {
         className: `player player-${player.name}`,
         style: `background-color: ${player.color}`,
       },
-      createHTML("div", {
+      jsx("div", {
         className: "name-label",
         textContent: player.name,
       })
@@ -363,7 +361,7 @@ function animateExplosion(explosionTiles) {
     const cell = document.querySelectorAll(".gameContainer > div")[index];
     if (cell) {
       if (!cell.classList.contains("wall")) {
-        const explosion = createHTML("div", { className: "explosion" });
+        const explosion = jsx("div", { className: "explosion" });
         cell.appendChild(explosion);
         setTimeout(() => explosion.remove(), 500);
       }
@@ -380,7 +378,7 @@ function drawBomb(x, y) {
   const index = y * MAX_ROWS + x;
   const cell = document.querySelectorAll(".gameContainer > div")[index];
   if (!cell) return;
-  const bomb = createHTML("div", { className: "bomb" });
+  const bomb = jsx("div", { className: "bomb" });
   cell.appendChild(bomb);
 }
 
@@ -409,20 +407,20 @@ function gameOver(winnerName = "Unknown") {
   allPlayers = {};
   localPlayer = {};
 
-  const gameOverScreen = createHTML("div", {
+  const gameOverScreen = jsx("div", {
     className: "game-over",
   });
 
-  const message = createHTML("h2", {
+  const message = jsx("h2", {
     textContent: winnerName
       ? `🏆 Game Over! Winner: ${winnerName}`
       : "☠️ Game Over! You Lost!",
   });
 
-  const button = createHTML(
+  const button = jsx(
     "button",
     { className: "restart-btn", onclick: () => rout.navigate("/") },
-    createHTML("span", { textContent: "Return to Lobby" })
+    jsx("span", { textContent: "Return to Lobby" })
   );
 
   gameOverScreen.appendChild(message);
