@@ -3,8 +3,8 @@ import { Router } from "./core/router.js";
 import { Dom } from "./core/vdom.js";
 import { Game } from "./game.js";
 import { EventListener } from "./core/events.js";
-const throttle = require("../../server/Functions/helperFunctions.js");
-let moveDelay = 200; 
+import { throttle } from "./functions/helperfunctions.js";
+let moveDelay = 200;
 const MAX_ROWS = 15;
 export const rout = new Router();
 const dom = new Dom();
@@ -48,6 +48,23 @@ function chatHandler(e) {
   socket.send(JSON.stringify({ message: e.target.children[0].value }));
 }
 let alreadyStarted = false;
+let throttledMove = null;
+function handleMove(e) {
+  const keyMap = {
+    ArrowUp: "up",
+    ArrowDown: "down",
+    ArrowLeft: "left",
+    ArrowRight: "right",
+  };
+  if (keyMap[e.key] && socket?.readyState === WebSocket.OPEN) {
+    socket.send(
+      JSON.stringify({
+        type: "move",
+        dir: keyMap[e.key],
+      })
+    );
+  }
+}
 function createConnection() {
   if (socket !== null) return;
   //this should be updated if needed when needed depending on which machine we're working with
@@ -60,29 +77,28 @@ function createConnection() {
       if (alreadyStarted) return;
       alreadyStarted = true;
       console.log("started");
-
-      const throttledMove = throttle((e) => {
-        const keyMap = {
-          ArrowUp: "up",
-          ArrowDown: "down",
-          ArrowLeft: "left",
-          ArrowRight: "right",
-        };
-
-        if (keyMap[e.key] && socket?.readyState === WebSocket.OPEN) {
-          socket.send(
-            JSON.stringify({
-              type: "move",
-              dir: keyMap[e.key],
-            })
-          );
-        }
-
+      // const throttledMove = throttle((e) => {
+      //   const keyMap = {
+      //     ArrowUp: "up",
+      //     ArrowDown: "down",
+      //     ArrowLeft: "left",
+      //     ArrowRight: "right",
+      //   };
+      //   if (keyMap[e.key] && socket?.readyState === WebSocket.OPEN) {
+      //     socket.send(
+      //       JSON.stringify({
+      //         type: "move",
+      //         dir: keyMap[e.key],
+      //       })
+      //     );
+      //   }
+      // }, moveDelay);
+      moveDelay = allPlayers[localPlayer.name]?.speed || 200;
+      throttledMove = throttle(handleMove, moveDelay);
+      EventListener("document", "keydown", (e) => {
         if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
           socket.send(JSON.stringify({ type: "drop-bomb" }));
         }
-      }, moveDelay);
-      EventListener("document", "keydown", (e) => {
         e.preventDefault();
         throttledMove(e);
       });
@@ -202,6 +218,9 @@ function createConnection() {
     if (data.type === "powerup-appeared") {
       placePowerUp(data.x, data.y, data.powerUp);
     }
+    // this whole section should be updated there should be no queryselectors
+    // ## khdaam 3la raseek a si waliiiid
+
     if (data.type === "update-lives" && data.name === localPlayer.name) {
       document.querySelector("#hud-lives").textContent = data.lives;
     }
@@ -212,6 +231,9 @@ function createConnection() {
           data.newStats.firepower;
         document.querySelector("#hud-bombs").textContent =
           data.newStats.maxBombs;
+        document.querySelector("#hud-speed").textContent = `x${
+          200 / data.newStats.speed
+        }`;
       }
     }
     if (data.type === "power-up-expired") {
@@ -222,9 +244,19 @@ function createConnection() {
         } else if (data.stat === "maxBombs") {
           document.querySelector("#hud-bombs").textContent = data.value;
           localPlayer.maxBombs = data.value;
+        } else if (data.stat === "speed") {
+          document.querySelector("#hud-speed").textContent = "1";
+          localPlayer.speed = data.value;
         }
       }
     }
+    if (data.type === "update-speed" && data.name === localPlayer.name) {
+      moveDelay = data.speed;
+      localPlayer.speed = data.speed;
+      document.querySelector("#hud-speed").textContent = `x${200 / moveDelay}`;
+      throttledMove = throttle(handleMove, moveDelay);
+    }
+
     if (data.type === "game-over") {
       gameOver(data.winner);
     }
@@ -241,6 +273,7 @@ function gamehandler() {
   <p>❤️ Lives: <span id="hud-lives">${3}</span></p>
   <p>🔥 Firepower: <span id="hud-fire">${1}</span></p>
   <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
+  <p>👠 Speed: <span id ="hud-speed">x${1}</span><p>
 `;
   root.appendChild(hud);
 
@@ -252,7 +285,7 @@ function placePowerUp(x, y, kind) {
   const cell = document.querySelectorAll(".gameContainer > div")[index];
 
   if (cell) {
-    // Remove existing powerup first  if there is any
+    // Remove existing powerup first ,if there is any
     const existing = cell.querySelector(".powerup");
     if (existing) existing.remove();
 
@@ -268,6 +301,8 @@ function getPowerupSymbol(kind) {
       return "B";
     case "firepower":
       return "F";
+    case "speed":
+      return "S";
     case "random":
       return "?";
     default:

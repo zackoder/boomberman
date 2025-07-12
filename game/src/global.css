@@ -51,6 +51,7 @@
 }
 
 .gameContainer > div {
+  
   width: 100%;
   height: 100%;
   position: relative; /* useful for positioning player inside */
@@ -76,15 +77,16 @@
 .player {
   width: 100%;
   height: 100%;
-  /* background-color: red; */
+  position: absolute;
   border-radius: 50%;
   box-shadow: 0 0 5px black;
-  transition: transform 0.2s ease;
+  transition: all 1s ease;
 }
 
 .bomb {
   width: 100%;
   height: 100%;
+  position: absolute; 
   background-color: black;
   border-radius: 50%;
   animation: blink 0.5s infinite alternate;

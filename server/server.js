@@ -1,4 +1,8 @@
-const { HandleExplosion, applyPowerUp,powerUps} = require("./Functions/gameFunctions");
+const {
+  HandleExplosion,
+  applyPowerUp,
+  powerUps,
+} = require("./Functions/gameFunctions");
 const { broadcast } = require("./Functions/helperFunctions");
 
 const express = require("express");
@@ -19,13 +23,14 @@ const START_POSITIONS = [
 ];
 const MAX_FIREPOWER = 2;
 const MAX_BOMBS = 3;
+const MAX_SPEED = 2;
 const POWER_UP_DURATION = 30000;
 const info = [
   "wait for other players to join",
   "you will start after a few secends",
 ];
 let gameStat = false;
- 
+
 const players = new Map();
 const PLAYER_COLORS = ["red", "blue", "green", "yellow"];
 
@@ -46,7 +51,7 @@ ws.on("request", (req) => {
 
     if (data.message) {
       const player = players.get(connection);
-      broadcast({ sender: player.name, message: data.message},players);
+      broadcast({ sender: player.name, message: data.message }, players);
     }
 
     if (data.type === "name") {
@@ -77,6 +82,7 @@ ws.on("request", (req) => {
         maxBombs: 1,
         activeBombs: 0,
         firepower: 1,
+        speed: 200,
         color: PLAYER_COLORS[startIndex],
       };
       players.set(connection, player);
@@ -84,26 +90,29 @@ ws.on("request", (req) => {
 
       let interval = null;
       let currentTime = 300;
-      let waiting = 10;
+      let waiting = 0;
       console.log("interval condition", players.size >= 2, currentTime === 300);
 
       if (players.size == 2) {
         interval = setInterval(() => {
           console.log(players.size >= 2, interval === null);
-          if (players.size === 4 || currentTime <= 0) {
+          if (players.size === 2 || currentTime <= 0) {
             clearInterval(interval);
             gameStat = true;
             currentTime = 300;
-            broadcast({ type: "init", map, players: [...players.values()]},players);
+            broadcast(
+              { type: "init", map, players: [...players.values()] },
+              players
+            );
           }
           if (players.size < 2) {
             clearInterval(interval);
             currentTime = 200;
-            broadcast({ time: currentTime },players);
+            broadcast({ time: currentTime }, players);
             return;
           }
           currentTime--;
-          broadcast({ time: currentTime},players);
+          broadcast({ time: currentTime }, players);
         }, 1000);
       }
       let beforestart = null;
@@ -113,27 +122,30 @@ ws.on("request", (req) => {
             console.log("conting donw befor the game start", waiting);
 
             if (players.size < 2) {
-              broadcast({ players: players.size, restart: "restart" },players);
+              broadcast({ players: players.size, restart: "restart" }, players);
               clearInterval(beforestart);
               return;
             }
             if (waiting <= 0) {
-              broadcast({ gameStarted: true },players);
+              broadcast({ gameStarted: true }, players);
               clearInterval(beforestart);
               return;
             }
-            broadcast({ time: waiting },players);
+            broadcast({ time: waiting }, players);
             waiting--;
           }
         }, 1000);
       }
     }
     if (!gameStat) {
-      broadcast({
-        name: data.name,
-        players: players.size,
-        info: info[players.size < 2 ? 0 : 1],
-      } ,players);
+      broadcast(
+        {
+          name: data.name,
+          players: players.size,
+          info: info[players.size < 2 ? 0 : 1],
+        },
+        players
+      );
     }
 
     // Send initial map and player info
@@ -165,13 +177,16 @@ ws.on("request", (req) => {
         player.x = newX;
         player.y = newY;
 
-        broadcast({
-          type: "player-move",
-          name: player.name,
-          x: newX,
-          y: newY,
-          // players,
-        },players);
+        broadcast(
+          {
+            type: "player-move",
+            name: player.name,
+            x: newX,
+            y: newY,
+            // players,
+          },
+          players
+        );
       }
       const powerUpIndex = powerUps.findIndex(
         (p) => p.x === player.x && p.y === player.y
@@ -180,22 +195,40 @@ ws.on("request", (req) => {
         const powerUp = powerUps.splice(powerUpIndex, 1)[0];
 
         if (powerUp.type === "firepower") {
-          applyPowerUp(player, "firepower", MAX_FIREPOWER, POWER_UP_DURATION,players);
+          applyPowerUp(
+            player,
+            "firepower",
+            MAX_FIREPOWER,
+            POWER_UP_DURATION,
+            players
+          );
         } else if (powerUp.type === "bomb") {
-          applyPowerUp(player, "maxBombs", MAX_BOMBS, POWER_UP_DURATION,players);
+          applyPowerUp(
+            player,
+            "maxBombs",
+            MAX_BOMBS,
+            POWER_UP_DURATION,
+            players
+          );
+        } else if (powerUp.type === "speed") {
+          applyPowerUp(player, "speed", null, POWER_UP_DURATION, players);
         }
 
-        broadcast({
-          type: "power-up-collected",
-          name: player.name,
-          x: player.x,
-          y: player.y,
-          powerUp: powerUp.type,
-          newStats: {
-            firepower: player.firepower,
-            maxBombs: player.maxBombs,
+        broadcast(
+          {
+            type: "power-up-collected",
+            name: player.name,
+            x: player.x,
+            y: player.y,
+            powerUp: powerUp.type,
+            newStats: {
+              firepower: player.firepower,
+              maxBombs: player.maxBombs,
+              speed: player.speed,
+            },
           },
-        },players);
+          players
+        );
       }
     }
     if (data.type === "drop-bomb") {
@@ -211,15 +244,18 @@ ws.on("request", (req) => {
       player.activeBombs++;
 
       // notify clients that the bomb is placed by a player !!!!!!!
-      broadcast({
-        type: "bomb-placed",
-        x,
-        y,
-      },players);
+      broadcast(
+        {
+          type: "bomb-placed",
+          x,
+          y,
+        },
+        players
+      );
 
       // set a timeout to the explosion
       setTimeout(() => {
-        HandleExplosion(map,x, y, name, players, bombs);
+        HandleExplosion(map, x, y, name, players, bombs);
         player.activeBombs--;
       }, 1200);
     }
@@ -228,15 +264,17 @@ ws.on("request", (req) => {
   connection.on("close", () => {
     const leavingPlayer = players.get(connection);
     if (leavingPlayer) {
-      broadcast({
-        type: "player-leave",
-        name: leavingPlayer.name,
-      },players);
+      broadcast(
+        {
+          type: "player-leave",
+          name: leavingPlayer.name,
+        },
+        players
+      );
     }
     players.delete(connection);
   });
 });
- 
 
 function createmap() {
   let row = [];
