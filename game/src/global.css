@@ -51,10 +51,19 @@
 }
 
 .gameContainer > div {
-  
   width: 100%;
   height: 100%;
   position: relative; /* useful for positioning player inside */
+}
+
+/* .gameContainer .form-nickname {
+  width: 100%;
+  display: block;
+  background-color: #555 !important;
+} */
+.form-nickname .input {
+  margin-left: 20px;
+  width: 500px;
 }
 
 /* === Cell Types === */
@@ -67,7 +76,6 @@
   background-color: #888;
   border: 2px dashed #ccc;
 }
-
 
 .emptysell {
   background-color: #eaeaea;
@@ -86,7 +94,7 @@
 .bomb {
   width: 100%;
   height: 100%;
-  position: absolute; 
+  position: absolute;
   background-color: black;
   border-radius: 50%;
   animation: blink 0.5s infinite alternate;
@@ -123,7 +131,6 @@
 
 /* /////////////////////////////////////////////////// */
 
- 
 .powerup {
   width: 80%;
   height: 80%;
@@ -193,7 +200,6 @@
   color: white;
 }
 /* Player Name Label */
-
 
 .game-over {
   text-align: center;

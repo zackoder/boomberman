@@ -16,7 +16,7 @@ export class Router {
 
   handleRouteChange() {
     const path = window.location.pathname;
-    console.log("path--------", path);
+    // console.log("path--------", path);
 
     if (this.routers[path]) {
       const Vdom = this.routers[path]();

@@ -4,7 +4,6 @@ import { EventListener } from "./core/events.js";
 import { throttle } from "./functions/helperfunctions.js";
 import { jsx, root } from "./core/dom.js";
 import { render } from "./core/render.js";
-// import { render } from "./core/render.js";
 
 let moveDelay = 200;
 const MAX_ROWS = 15;
@@ -17,21 +16,28 @@ let game = null;
 rout.addrout("/", homePage);
 rout.addrout("/game", gamehandler);
 
-function homePage() {
+export function homePage() {
   // clear the root container
   root.innerHTML = "";
   // create label
-  const label = jsx("label", {
-    for: "nameInpt",
-    textContent: "enter your name:",
-  });
+  const label = jsx(
+    "label",
+    {
+      for: "nameInpt",
+      // textContent: "enter your name:",
+    },
+    "Enter Your Name:"
+  );
   //create input
-  const input = jsx("input", { id: "nameInpt", className: "input" });
+  const input = jsx("input", {
+    id: "nameInpt",
+    className: "input",
+  });
 
   //create form with label and input as children
   const form = jsx(
     "form",
-    { className: "nickname", onsubmit: submitName },
+    { className: "form-nickname", onsubmit: submitName },
     label,
     input
   );
@@ -52,9 +58,10 @@ function homePage() {
     playersCounter
   );
   // Render game container into root
-  render(root, game);
+  // render(root, game);
   // const app = jsx(root, {}, game);
   // root.appendChild(game);
+  return game;
 }
 function chatHandler(e) {
   e.preventDefault();
@@ -108,12 +115,15 @@ function createConnection() {
       // }, moveDelay);
       moveDelay = allPlayers[localPlayer.name]?.speed || 200;
       throttledMove = throttle(handleMove, moveDelay);
-      EventListener("document", "keydown", (e) => {
-        if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ type: "drop-bomb" }));
-        }
-        e.preventDefault();
-        throttledMove(e);
+      // EventListener("document", "keydown", (e) => {
+      jsx("document", {
+        onkeydown: (e) => {
+          if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "drop-bomb" }));
+          }
+          e.preventDefault();
+          throttledMove(e);
+        },
       });
     }
     if (data.restart) {
@@ -278,7 +288,7 @@ function createConnection() {
 
 createConnection();
 rout.handleRouteChange();
-function gamehandler() {
+export function gamehandler() {
   if (game === null) return rout.navigate("/");
   root.innerHTML = "";
   const hud = jsx("div", { className: "hud" });
