@@ -9,7 +9,7 @@ const DEFAULT_STATS = {
 };
 
 function HandleExplosion(map, x, y, owner, players, bombs) {
-  // 🧨 Remove bomb from list
+  //  Remove bomb from list
   const index = bombs.findIndex(
     (b) => b.x === x && b.y === y && b.owner === owner
   );
@@ -17,17 +17,17 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
 
   const explosionTiles = [{ x, y }];
   const directions = [
-    { dx: 0, dy: -1 }, // up
-    { dx: 0, dy: 1 }, // down
-    { dx: -1, dy: 0 }, // left
-    { dx: 1, dy: 0 }, // right
+    { dx: 0, dy: -1 }, 
+    { dx: 0, dy: 1 },   
+    { dx: -1, dy: 0 }, 
+    { dx: 1, dy: 0 }, 
   ];
 
-  // 🔥 Determine blast range from player firepower
+  //  Determine blast range from player firepower
   const player = [...players.values()].find((p) => p.name === owner);
   const firepower = player?.firepower || 1;
 
-  // 🌩 Expand in each direction
+  //  Expand in each direction
   for (const { dx, dy } of directions) {
     let nx = x;
     let ny = y;
@@ -36,7 +36,7 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
       nx += dx;
       ny += dy;
 
-      // 🧱 Stop at map boundary or hard wall
+      //  Stop at map boundary or hard wall
       if (nx < 0 || nx >= MAX_ROWS || ny < 0 || ny >= MAX_ROWS) break;
       if (map[ny][nx] === 1) break;
 
@@ -61,12 +61,13 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
             players
           );
         }
-        break; // 🔥 Stop fire in that direction after soft wall
+        break;  
+        // Stop fire in that direction after soft wall
       }
     }
   }
 
-  // 💀 Check for player deaths
+  //  Check for dead players by ranging on players map 
   for (const [conn, player] of players.entries()) {
     if (explosionTiles.some((t) => t.x === player.x && t.y === player.y)) {
       player.lives--;
@@ -94,14 +95,14 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
     }
   }
 
-  // 🏆 End game if only one player remains
+  //  End game if only one player remains
   const alivePlayers = [...players.values()].filter((p) => !p.dead);
   if (alivePlayers.length <= 1) {
     const winner = alivePlayers[0]?.name || null;
     broadcast({ type: "game-over", winner }, players);
   }
 
-  // 🎆 Notify all players of the explosion animation
+  //  Notify all players of the explosion animation
   broadcast(
     {
       type: "bomb-exploded",

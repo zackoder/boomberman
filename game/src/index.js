@@ -231,10 +231,10 @@ function createConnection() {
           data.newStats.firepower;
         document.querySelector("#hud-bombs").textContent =
           data.newStats.maxBombs;
-        document.querySelector("#hud-speed").textContent = `x${
-           data.newStats.speed / 50
-        }`;
-        console.log('speeeeeeeeeeeeeeeeeeeeeeeeeeed', data.newStats.speed);
+        // document.querySelector("#hud-speed").textContent = `x${
+        //    data.newStats.speed / 50
+        // }`;
+        // console.log('speeeeeeeeeeeeeeeeeeeeeeeeeeed', data.newStats.speed);
         
       }
     }
