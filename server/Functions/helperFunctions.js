@@ -6,7 +6,4 @@ function broadcast(data, players={}) {
     conn.sendUTF(JSON.stringify(data));
   }
 }
-
-
-
 module.exports = {broadcast};

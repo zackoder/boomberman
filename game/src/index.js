@@ -31,28 +31,28 @@ export function homePage() {
   //create input
   const input = jsx("input", {
     id: "nameInpt",
-    className: "input",
+    class: "input",
   });
 
   //create form with label and input as children
   const form = jsx(
     "form",
-    { className: "form-nickname", onsubmit: submitName },
+    { class: "form-nickname", onsubmit: submitName },
     label,
     input
   );
   // const game = jsx(
   //   "div",
   //   {
-  //     className: "gameContainer",
+  //     class: "gameContainer",
   //   },
   //   form
   // );
-  const playersCounter = jsx("span", { className: "playersCounter" });
+  const playersCounter = jsx("span", { class: "playersCounter" });
   const game = jsx(
     "div",
     {
-      className: "gameContainer",
+      class: "gameContainer",
     },
     form,
     playersCounter
@@ -131,47 +131,67 @@ function createConnection() {
         rout.navigate("/");
       }, 5000);
 
-      const errorel = document.querySelector(".error");
-      if (!errorel) {
-        const error = jsx("div", {
-          className: "error",
-          textContent: "the others left befor the game start",
-        });
-        root.prepend(error);
+      // const errorel = document.querySelector(".error");
+      // if (!errorel) {
+      //   const error = jsx("div", {
+      //     class: "error",
+      //     textContent: "the others left befor the game start",
+      //   });
+      //   root.prepend(error);
+      // }
+      if (!err) {
+        const err = jsx(
+          "div",
+          { class: "error" },
+          "the others left before the game start"
+        );
+        render(root, err);
       }
     }
     if (data.name) {
       localPlayer.name = data.name;
     }
-    if (data.time) {
-      const T = document.querySelector(".timer");
-      if (!T) {
-        const timer = jsx("span", {
-          className: "timer",
-          textContent: data.time,
-        });
-        root.appendChild(timer);
-      } else {
-        T.textContent = data.time;
-      }
-    }
+    // if (data.time) {
+    //   const T = document.querySelector(".timer");
+    //   if (!T) {
+    //     const timer = jsx("span", {
+    //       class: "timer",
+    //       textContent: data.time,
+    //     });
+    //     root.appendChild(timer);
+    //   } else {
+    //     T.textContent = data.time;
+    //   }
+    // }
+    const timer = !timer
+      ? jsx("span", { class: "timer" }, data.time)
+      : data.time;
+
     if (data.error) {
-      const errorContainer = jsx("p", { className: "error" });
-      errorContainer.textContent = data.error;
+      const errorContainer = jsx("p", { class: "error" }, data.error); // add data.error
+      // errorContainer.textContent = data.error;
       root.appendChild(errorContainer);
+      // render(root, errorContainer);
+      // return errorContainer;
       setTimeout(() => errorContainer.remove(), 3000);
     }
 
     if (data.message) {
-      const container = jsx("div");
-      const message = jsx("p", {
-        className: "message",
-        textContent: `from: ${data.sender} ${data.message}`,
-      });
-      container.prepend(message);
+      const message = jsx(
+        "p",
+        {
+          class: "message",
+          // textContent: `from: ${data.sender} ${data.message}`,
+        },
+        `from: ${data.sender} ${data.message}`
+      );
+      const container = jsx("div", {}, message);
+      // container.prepend(message);
       document.querySelector(".gameContainer").appendChild(container);
     }
     if (data.players) {
+      console.log("data", data);
+
       document.querySelector(
         ".playersCounter"
       ).textContent = `${data.info} ${data.players}`;
@@ -179,12 +199,12 @@ function createConnection() {
     if (data.players >= 2) {
       const chatSection = jsx(
         "div",
-        { className: "chatbox" },
-        jsx("div", { className: "messagesContainer" }),
+        { class: "chatbox" },
+        jsx("div", { class: "messagesContainer" }),
         jsx(
           "form",
           { onsubmit: chatHandler, classList: "chatForm" },
-          jsx("input", { className: "chatInput" })
+          jsx("input", { class: "chatInput" })
         )
       );
       document.querySelector(".nickname").remove();
@@ -291,13 +311,14 @@ rout.handleRouteChange();
 export function gamehandler() {
   if (game === null) return rout.navigate("/");
   root.innerHTML = "";
-  const hud = jsx("div", { className: "hud" });
+  const hud = jsx("div", { class: "hud" });
   hud.innerHTML = `
   <p>❤️ Lives: <span id="hud-lives">${3}</span></p>
   <p>🔥 Firepower: <span id="hud-fire">${1}</span></p>
   <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
   <p>👠 Speed: <span id ="hud-speed">x${1}</span><p>
 `;
+
   root.appendChild(hud);
 
   for (let player in allPlayers) renderPlayer(allPlayers[player]);
@@ -313,7 +334,7 @@ function placePowerUp(x, y, kind) {
     if (existing) existing.remove();
 
     // Create power-up
-    const powerup = jsx("div", { className: `powerup ${kind}` });
+    const powerup = jsx("div", { class: `powerup ${kind}` });
     powerup.textContent = getPowerupSymbol(kind);
     cell.appendChild(powerup);
   }
@@ -357,11 +378,11 @@ function renderPlayer(player) {
     const playerDiv = jsx(
       "div",
       {
-        className: `player player-${player.name}`,
+        class: `player player-${player.name}`,
         style: `background-color: ${player.color}`,
       },
       jsx("div", {
-        className: "name-label",
+        class: "name-label",
         textContent: player.name,
       })
     );
@@ -371,6 +392,7 @@ function renderPlayer(player) {
 
 function submitName(e) {
   e.preventDefault();
+
   const nameInput = e.target.querySelector("#nameInpt");
   // if (nameInput)
   // console.log(ipt);
@@ -386,7 +408,7 @@ function animateExplosion(explosionTiles) {
     const cell = document.querySelectorAll(".gameContainer > div")[index];
     if (cell) {
       if (!cell.classList.contains("wall")) {
-        const explosion = jsx("div", { className: "explosion" });
+        const explosion = jsx("div", { class: "explosion" });
         cell.appendChild(explosion);
         setTimeout(() => explosion.remove(), 500);
       }
@@ -403,7 +425,7 @@ function drawBomb(x, y) {
   const index = y * MAX_ROWS + x;
   const cell = document.querySelectorAll(".gameContainer > div")[index];
   if (!cell) return;
-  const bomb = jsx("div", { className: "bomb" });
+  const bomb = jsx("div", { class: "bomb" });
   cell.appendChild(bomb);
 }
 
@@ -433,7 +455,7 @@ function gameOver(winnerName = "Unknown") {
   localPlayer = {};
 
   const gameOverScreen = jsx("div", {
-    className: "game-over",
+    class: "game-over",
   });
 
   const message = jsx("h2", {
@@ -444,7 +466,7 @@ function gameOver(winnerName = "Unknown") {
 
   const button = jsx(
     "button",
-    { className: "restart-btn", onclick: () => rout.navigate("/") },
+    { class: "restart-btn", onclick: () => rout.navigate("/") },
     jsx("span", { textContent: "Return to Lobby" })
   );
 

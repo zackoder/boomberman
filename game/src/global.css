@@ -39,7 +39,12 @@
   width: 50px;
   height: 50px;
 } */
-
+body {
+  background-image: url(./images/bg_main.jpg);
+  background-size: cover;
+  background-repeat: no-repeat;
+  height: calc(100vh - 48px);
+}
 .gameContainer {
   width: 450px;
   height: 450px;
@@ -47,6 +52,7 @@
   grid-template-columns: repeat(15, 1fr);
   grid-template-rows: repeat(15, 1fr);
   gap: 1px;
+  margin: 50px auto;
   /* background-color: #222;   */
 }
 
@@ -56,14 +62,30 @@
   position: relative; /* useful for positioning player inside */
 }
 
-/* .gameContainer .form-nickname {
-  width: 100%;
-  display: block;
-  background-color: #555 !important;
-} */
+.gameContainer .form-nickname {
+  /* max-width: 400px; */
+  width: 400px;
+  /* height: 100px; */
+  background-color: #333;
+  opacity: 0.5;
+  color: #fff;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  gap: 10px;
+}
+
 .form-nickname .input {
-  margin-left: 20px;
-  width: 500px;
+  width: 60%;
+  padding: 5px 8px;
+  border-radius: 5px;
+  outline: none;
+  border: 1px solid #333;
+  color: #000;
+  font-size: 16px;
+  font-weight: bold;
 }
 
 /* === Cell Types === */
