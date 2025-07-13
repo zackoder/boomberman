@@ -232,8 +232,10 @@ function createConnection() {
         document.querySelector("#hud-bombs").textContent =
           data.newStats.maxBombs;
         document.querySelector("#hud-speed").textContent = `x${
-          200 / data.newStats.speed
+           data.newStats.speed / 50
         }`;
+        console.log('speeeeeeeeeeeeeeeeeeeeeeeeeeed', data.newStats.speed);
+        
       }
     }
     if (data.type === "power-up-expired") {
@@ -250,10 +252,12 @@ function createConnection() {
         }
       }
     }
-    if (data.type === "update-speed" && data.name === localPlayer.name) {
+    if (data.type === "speed" && data.name === localPlayer.name) {
       moveDelay = data.speed;
+      console.log("nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",data.speed);
+      
       localPlayer.speed = data.speed;
-      document.querySelector("#hud-speed").textContent = `x${200 / moveDelay}`;
+      document.querySelector("#hud-speed").textContent = data.speed;
       throttledMove = throttle(handleMove, moveDelay);
     }
 
@@ -273,8 +277,8 @@ function gamehandler() {
   <p>❤️ Lives: <span id="hud-lives">${3}</span></p>
   <p>🔥 Firepower: <span id="hud-fire">${1}</span></p>
   <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
-  <p>👠 Speed: <span id ="hud-speed">x${1}</span><p>
-`;
+  <p>👠 Speed: <span id ="hud-speed">${1}x</span><p>
+  `;
   root.appendChild(hud);
 
   for (let player in allPlayers) renderPlayer(allPlayers[player]);
