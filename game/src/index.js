@@ -12,7 +12,6 @@ export const rout = new Router();
 let socket = null;
 // let localPlayer = {};
 let allPlayers = {};
-const [localPlayer, setLocalPlayer] = useState({});
 
 let game = null;
 let playersCounter;
@@ -21,14 +20,18 @@ rout.addrout("/", homePage);
 rout.addrout("/game", gamehandler);
 
 export function homePage() {
+  const [localPlayer, setLocalPlayer] = useState({});
   const [Timer, setTimer] = useState(20);
+  const [name, setName] = useState("")
   // clear the root container
-  root.innerHTML = "";
+  // root.innerHTML = "";
   // create label
-  console.log(typeof setTimer);
+  // console.log(typeof setTimer);
 
-  handlemsgs(setTimer);
-  const timerContainer = jsx("p", {}, Timer);
+  handlemsgs({ setTimer, setLocalPlayer });
+  console.log(Timer);
+
+  const timerContainer = jsx("p", { class: "timer" }, Timer || 20);
 
   const label = jsx(
     "label",
@@ -58,14 +61,15 @@ export function homePage() {
   //   },
   //   form
   // );
-  playersCounter = jsx("span", { class: "playersCounter" });
+  // console.log(allPlayers.size)
+  const playersCounter = jsx("span", { class: "playersCounter" }, allPlayers.size || 0);
   const game = jsx(
     "div",
     {
       class: "gameContainer",
     },
-    timerContainer,
     form,
+    timerContainer,
     playersCounter
   );
   // Render game container into root
@@ -97,14 +101,14 @@ function handleMove(e) {
     );
   }
 }
+
 function createConnection() {
   if (socket !== null) return;
   //this should be updated if needed when needed depending on which machine we're working with
   socket = new WebSocket("ws://0.0.0.0:3001");
 }
 
-function handlemsgs(setTimer) {
-  if (!setTimer) console.log(typeof setTimer);
+function handlemsgs({ setTimer, setLocalPlayer }) {
 
   socket.onmessage = (e) => {
     const data = JSON.parse(e.data);
@@ -168,7 +172,7 @@ function handlemsgs(setTimer) {
       }
     }
     if (data.name) {
-      setLocalPlayer({ ...localPlayer, name: data.name });
+      setLocalPlayer({ name: data.name });
       // localPlayer.name = data.name;
     }
     if (data.time) {
@@ -185,16 +189,18 @@ function handlemsgs(setTimer) {
       // const timer = !timer
       //   ?
       //   : data.time;
+      console.log("DATA", data.time);
+
       setTimer(data.time);
     }
 
-    if (data.error) {
-      const errorContainer = jsx("p", { class: "error" }, data.error); // add data.error
-      // errorContainer.textContent = data.error;
-      // root.appendChild(errorContainer);
-      setTimeout(() => errorContainer.remove(), 3000);
-      return errorContainer;
-    }
+    // if (data.error) {
+    //   const errorContainer = jsx("p", { class: "error" }, data.error); // add data.error
+    //   // errorContainer.textContent = data.error;
+    //   // root.appendChild(errorContainer);
+    //   setTimeout(() => errorContainer.remove(), 3000);
+    //   return errorContainer;
+    // }
 
     if (data.message) {
       const message = jsx(
@@ -214,9 +220,9 @@ function handlemsgs(setTimer) {
       // document.querySelector(
       //   ".playersCounter"
       // ).textContent = `${data.info} ${data.players}`;
-      playersCounter.textContent = playersCounter
-        ? `${data.info} ${data.players}`
-        : "";
+      // playersCounter.textContent = playersCounter
+      //   ? `${data.info} ${data.players}`
+      //   : "";
     }
     if (data.players >= 2) {
       const chatSection = jsx(
@@ -298,9 +304,8 @@ function handlemsgs(setTimer) {
           data.newStats.firepower;
         document.querySelector("#hud-bombs").textContent =
           data.newStats.maxBombs;
-        document.querySelector("#hud-speed").textContent = `x${
-          200 / data.newStats.speed
-        }`;
+        document.querySelector("#hud-speed").textContent = `x${200 / data.newStats.speed
+          }`;
       }
     }
     if (data.type === "power-up-expired") {
@@ -338,10 +343,9 @@ export function gamehandler() {
   // const [firepowerCounter, setFirepowerCounter] = useState(1);
   // const [bombsCounter, setBombsCounter] = useState(1);
   // const [speedCounter, setSpeedCounter] = useState(1);
-  root.innerHTML = "";
+  // root.innerHTML = "";
   const hud = jsx("div", { class: "hud" });
   hud.innerHTML = `
-  <p>${Timer}</p>
   <p>❤️ Lives: <span id="hud-lives">${3}</span></p>
   <p>🔥 Firepower: <span id="hud-fire">${1}</span></p>
   <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
@@ -434,11 +438,12 @@ function renderPlayer(player) {
 function submitName(e) {
   e.preventDefault();
 
-  const nameInput = e.target.querySelector("#nameInpt");
+  const nameInput = e.target.children[1]
   // if (nameInput)
   // console.log(ipt);
   if (!nameInput) return;
   const name = nameInput.value.trim();
+  nameInput.value = ""
   if (!name) return;
   socket.send(JSON.stringify({ type: "name", name }));
 }

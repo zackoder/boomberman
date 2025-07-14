@@ -1,27 +1,32 @@
 import { render } from "./render.js";
 
-let states = [];
-export let stateIndex = 0;
+let hookStates = [];
+let hookIndex = 0;
 
 export function resetStateIndex() {
-  stateIndex = 0;
+  hookIndex = 0
 }
 
 export function useState(initialValue) {
-  const currentIndex = stateIndex;
-  
-  if (states[currentIndex] === undefined) {
-    states[currentIndex] = initialValue;
-  }
+  const currentIndex = hookIndex;
 
-  function setState(newValue) {
-    if (typeof newValue === "function") states[currentIndex] = newValue();
-    else states[currentIndex] = newValue;
-    render();
-  }
+  // Initialize the state if it's the first time this hook is run
+  hookStates[currentIndex] = hookStates[currentIndex] || initialValue;
 
-  stateIndex++; // Move to next state slot
-  return [states[currentIndex], setState];
+  // Update hook index for the next hook call
+  hookIndex++;
+
+  // Function to update state and re-render
+  const setState = (newValue) => {
+    console.log(hookStates);
+
+    hookStates[currentIndex] = typeof newValue === 'function'
+      ? newValue(hookStates[currentIndex])
+      : newValue;
+    render(); // Re-render the component
+  };
+
+  return [hookStates[currentIndex], setState];
 }
 
 export function jsx(tag, props, ...children) {

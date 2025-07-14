@@ -6,22 +6,42 @@ import { createHTML, root } from "../dom.js";
 //   walk(oldNode, newNode, null, null);
 // }
 
-export function UpdateDOM(realElemt = root, oldVdom, newVdom) {
-  console.log("oldvdom", oldVdom);
-  console.log("newVdom", newVdom);
+// export function UpdateDOM(realElemt = root.children[0], oldVdom, newVdom) {
+//   if (!realElemt || oldVdom.tag !== newVdom.tag) {
+//     console.log("different tags", oldVdom, newVdom);
+//     console.log("parent", newVdom);
+
+//     createHTML(root, newVdom)
+//   }
+// }
+
+
+export function UpdateDOM(realElemt = root.children[0], oldVdom, newVdom) {
+
+  // console.log("oldvdom", oldVdom);
+  // console.log("newVdom", newVdom);
 
   if (!newVdom) {
     return;
   }
+  // console.log("------------------------ test", !oldVdom || oldVdom?.tag !== newVdom?.tag);
+
   if (!oldVdom || oldVdom.tag !== newVdom.tag) {
+    // console.log("---------------", oldVdom?.tag, newVdom?.tag);
+
     const newElement = createHTML(realElemt, newVdom);
+    // console.log("new element created", newElement);
+
     realElemt?.parentNode?.replaceChild(newElement, realElemt);
     return;
   }
+  // console.log("key and value", root.children);
+
   updateAttrs(oldVdom, newVdom, realElemt);
   updateChildren(realElemt, oldVdom.children, newVdom.children);
 }
 
+let counter = 0
 function updateChildren(element, oldChildren, newChildren) {
   oldChildren = oldChildren || [];
   newChildren = newChildren || [];
@@ -48,13 +68,16 @@ function updateChildren(element, oldChildren, newChildren) {
   });
 
   // Update or insert children at each position
+  // if (counter === 1) console.log("__________________________", newChildren, element.children);
 
   newChildren.forEach((newChild, i) => {
     let realChild = element.childNodes[i]; // div{div,p,spam}
+    // console.log(typeof newChild === "string" || typeof newChild === "number", newChild, realChild);
 
-    if (typeof newChild === "string") {
+    if (typeof newChild === "string" || typeof newChild === "number") {
       if (realChild && realChild.nodeType === Node.TEXT_NODE) {
         // hello
+        // console.log("real chiled", realChild);
         if (realChild.textContent !== newChild) {
           realChild.textContent = newChild;
         }
@@ -67,6 +90,8 @@ function updateChildren(element, oldChildren, newChildren) {
         }
       }
     } else {
+      // console.log();
+
       const newKey = newChild?.attrs?.key;
       if (newKey) {
         const oldEntry = oldKeys.get(newKey);
@@ -86,6 +111,7 @@ function updateChildren(element, oldChildren, newChildren) {
           }
         }
       } else {
+        // debugger
         if (realChild && realChild.nodeType === Node.ELEMENT_NODE) {
           const oldChild = oldChildren[i];
           if (
@@ -93,6 +119,8 @@ function updateChildren(element, oldChildren, newChildren) {
             oldChild.tag === newChild.tag &&
             !oldChild.attrs?.key
           ) {
+            // console.log(realChild);
+
             UpdateDOM(realChild, oldChild, newChild);
           } else {
             const newElement = createHTML(element, newChild);
@@ -100,7 +128,9 @@ function updateChildren(element, oldChildren, newChildren) {
           }
         } else {
           const newElement = createHTML(element, newChild);
+
           if (realChild) {
+            // console.log("newElement", typeof newElement);
             element.replaceChild(newElement, realChild);
           } else {
             element.appendChild(newElement);
@@ -112,6 +142,7 @@ function updateChildren(element, oldChildren, newChildren) {
   while (element.childNodes.length > newChildren.length) {
     element.removeChild(element.lastChild);
   }
+  counter++
 }
 
 function updateAttrs(oldNode, newNode, realElemt) {
@@ -119,9 +150,9 @@ function updateAttrs(oldNode, newNode, realElemt) {
   newNode = newNode.attrs || {};
 
   for (const [key, value] of Object.entries(newNode)) {
-    if (typeof value === "function" && key.startsWith("on"))
-      realElemt[key] = value;
-    realElemt.setAttribute(key, value);
+
+    if (typeof value === "function" && key.startsWith("on")) realElemt[key] = value;
+    else realElemt.setAttribute(key, value);
   }
   for (const [key, _] of Object.entries(oldNode)) {
     // console.log(key);

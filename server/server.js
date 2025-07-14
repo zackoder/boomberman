@@ -55,7 +55,7 @@ ws.on("request", (req) => {
     }
 
     if (data.type === "name") {
-      if (map.length === 0) {
+      if (!gameStat) {
         createmap();
       }
       for (let [conn, p] of players) {
@@ -140,6 +140,7 @@ ws.on("request", (req) => {
     if (!gameStat) {
       broadcast(
         {
+          time: 20,
           name: data.name,
           players: players.size,
           info: info[players.size < 2 ? 0 : 1],
