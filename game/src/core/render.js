@@ -1,6 +1,4 @@
-// import { rout } from "./router.js";
 import { rout } from "../index.js";
-import { resetStateIndex } from "./state.js";
 
 export let currentVdom = null;
 
@@ -9,6 +7,5 @@ export function updateVdom(new_dome) {
 }
 
 export function render() {
-  resetStateIndex();
   rout.handleRouteChange();
 }

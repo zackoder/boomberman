@@ -1,33 +1,46 @@
 import { render } from "./render.js";
 
-let hookStates = [];
-let hookIndex = 0;
-
-export function resetStateIndex() {
-  hookIndex = 0
+export class useState {
+  constructor(initialValue) {
+    this.initialValue = initialValue
+  }
+  setState(newValue) {
+    this.initialValue = newValue
+    render();
+  }
+  getStat() {
+    return this.initialValue
+  }
 }
 
-export function useState(initialValue) {
-  const currentIndex = hookIndex;
+// let hookStates = [];
+// let hookIndex = 0;
 
-  // Initialize the state if it's the first time this hook is run
-  hookStates[currentIndex] = hookStates[currentIndex] || initialValue;
+// export function resetStateIndex() {
+//   hookIndex = 0
+// }
 
-  // Update hook index for the next hook call
-  hookIndex++;
+// export function useState(initialValue) {
+//   const currentIndex = hookIndex;
 
-  // Function to update state and re-render
-  const setState = (newValue) => {
-    console.log(hookStates);
+//   // Initialize the state if it's the first time this hook is run
+//   hookStates[currentIndex] = hookStates[currentIndex] || initialValue;
 
-    hookStates[currentIndex] = typeof newValue === 'function'
-      ? newValue(hookStates[currentIndex])
-      : newValue;
-    render(); // Re-render the component
-  };
+//   // Update hook index for the next hook call
+//   hookIndex++;
 
-  return [hookStates[currentIndex], setState];
-}
+//   // Function to update state and re-render
+//   const setState = (newValue) => {
+//     console.log(hookStates);
+
+//     hookStates[currentIndex] = typeof newValue === 'function'
+//       ? newValue(hookStates[currentIndex])
+//       : newValue;
+//     render(); // Re-render the component
+//   };
+
+//   return [hookStates[currentIndex], setState];
+// }
 
 export function jsx(tag, props, ...children) {
   if (typeof tag === "function") {

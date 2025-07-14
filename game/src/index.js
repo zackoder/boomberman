@@ -20,18 +20,18 @@ rout.addrout("/", homePage);
 rout.addrout("/game", gamehandler);
 
 export function homePage() {
-  const [localPlayer, setLocalPlayer] = useState({});
-  const [Timer, setTimer] = useState(20);
-  const [name, setName] = useState("")
+  const ManegLocalPlayer = new useState({});
+  const ManageTimer = new useState(20);
+  // const Name = useState("")
   // clear the root container
   // root.innerHTML = "";
   // create label
   // console.log(typeof setTimer);
 
-  handlemsgs({ setTimer, setLocalPlayer });
-  console.log(Timer);
+  handlemsgs(ManageTimer, ManegLocalPlayer);
+  console.log(ManageTimer.getStat());
 
-  const timerContainer = jsx("p", { class: "timer" }, Timer || 20);
+  const timerContainer = jsx("p", { class: "timer" }, ManageTimer.getStat());
 
   const label = jsx(
     "label",
@@ -108,7 +108,7 @@ function createConnection() {
   socket = new WebSocket("ws://0.0.0.0:3001");
 }
 
-function handlemsgs({ setTimer, setLocalPlayer }) {
+function handlemsgs(setTimer, setLocalPlayer) {
 
   socket.onmessage = (e) => {
     const data = JSON.parse(e.data);
@@ -136,7 +136,7 @@ function handlemsgs({ setTimer, setLocalPlayer }) {
       //     );
       //   }
       // }, moveDelay);
-      moveDelay = allPlayers[localPlayer.name]?.speed || 200;
+      moveDelay = allPlayers[setLocalPlayer.getStat().name]?.speed || 200;
       throttledMove = throttle(handleMove, moveDelay);
       // EventListener("document", "keydown", (e) => {
       // jsx("document", {
@@ -172,7 +172,7 @@ function handlemsgs({ setTimer, setLocalPlayer }) {
       }
     }
     if (data.name) {
-      setLocalPlayer({ name: data.name });
+      setLocalPlayer.setState({ name: data.name });
       // localPlayer.name = data.name;
     }
     if (data.time) {
@@ -191,7 +191,7 @@ function handlemsgs({ setTimer, setLocalPlayer }) {
       //   : data.time;
       console.log("DATA", data.time);
 
-      setTimer(data.time);
+      setTimer.setState(data.time);
     }
 
     // if (data.error) {
@@ -365,7 +365,8 @@ export function gamehandler() {
 
   // root.appendChild(hud);
 
-  for (let player in allPlayers) renderPlayer(allPlayers[player]);
+  // for (let player in allPlayers) renderPlayer(allPlayers[player]);
+  return lives
 }
 // power-UPS section
 function placePowerUp(x, y, kind) {
