@@ -213,7 +213,8 @@ function createConnection() {
       );
       // document.querySelector(".nickname").remove();
       // document.querySelector(".gameContainer").appendChild(chatSection);
-      render(game, chatSection); // remplace this code
+      // render(game, chatSection); // remplace this code
+      return chatSection;
     }
 
     // Handle initial map and player info
@@ -325,7 +326,8 @@ export function gamehandler() {
   <p>👠 Speed: <span id ="hud-speed">x${1}</span><p>
 `;
 
-  root.appendChild(hud);
+  // root.appendChild(hud);
+  render(root, hud);
 
   for (let player in allPlayers) renderPlayer(allPlayers[player]);
 }
