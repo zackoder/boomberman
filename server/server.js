@@ -96,7 +96,7 @@ ws.on("request", (req) => {
       if (players.size == 2) {
         interval = setInterval(() => {
           console.log(players.size >= 2, interval === null);
-          if (players.size === 2 || currentTime <= 0) {
+          if (players.size === 4 || currentTime <= 0) {
             clearInterval(interval);
             gameStat = true;
             currentTime = 300;

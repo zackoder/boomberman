@@ -9,17 +9,19 @@ export function createHTML(elment = root, Vdom) {
     elment.append(el); // <p id="1" onclick = (e) => {} >text node</p>
     return el;
   }
-
+  if (!Vdom.attrs) Vdom.attrs = {};
+  if (!Vdom.children) Vdom.children = {};
   const el = document.createElement(Vdom.tag);
 
   // Appliquer les attributs
-  for (const [key, value] of Object.entries(Vdom.attrs)) { // [[id: "1"], [class: "class1"], [onclick: functon(){}] ]
+  for (const [key, value] of Object.entries(Vdom.attrs)) {
+    // [[id: "1"], [class: "class1"], [onclick: functon(){}] ]
     // if (key === "") continue
     if (typeof value === "function" && key.startsWith("on")) el[key] = value;
     else el.setAttribute(key, value);
   }
 
-  if (Vdom.children) {
+  if (Array.isArray(Vdom.children)) {
     for (const child of Vdom.children.flat()) {
       createHTML(el, child);
     }

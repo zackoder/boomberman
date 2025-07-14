@@ -20,9 +20,7 @@ export class Router {
 
     if (this.routers[path]) {
       const Vdom = this.routers[path]();
-      console.log("Vdom---------", Vdom);
-
-      UpdateDOM(root.children[0], currentVdom, Vdom);
+      UpdateDOM(root, currentVdom, Vdom);
       updateVdom(Vdom);
     } else {
       this.navigate("/notfound");

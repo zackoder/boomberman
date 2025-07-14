@@ -4,13 +4,16 @@ import { EventListener } from "./core/events.js";
 import { throttle } from "./functions/helperfunctions.js";
 import { jsx, root } from "./core/dom.js";
 import { render } from "./core/render.js";
+import { useState } from "./core/state.js";
 
 let moveDelay = 200;
 const MAX_ROWS = 15;
 export const rout = new Router();
 let socket = null;
-let localPlayer = {};
+// let localPlayer = {};
 let allPlayers = {};
+const [localPlayer, setLocalPlayer] = useState({});
+
 let game = null;
 let playersCounter;
 
@@ -18,9 +21,15 @@ rout.addrout("/", homePage);
 rout.addrout("/game", gamehandler);
 
 export function homePage() {
+  const [Timer, setTimer] = useState(20);
   // clear the root container
   root.innerHTML = "";
   // create label
+  console.log(typeof setTimer);
+
+  handlemsgs(setTimer);
+  const timerContainer = jsx("p", {}, Timer);
+
   const label = jsx(
     "label",
     {
@@ -29,13 +38,13 @@ export function homePage() {
     },
     "Enter Your Name:"
   );
-  //create input
+  // create input
   const input = jsx("input", {
     id: "nameInpt",
     class: "input",
   });
 
-  //create form with label and input as children
+  // create form with label and input as children
   const form = jsx(
     "form",
     { class: "form-nickname", onsubmit: submitName },
@@ -55,6 +64,7 @@ export function homePage() {
     {
       class: "gameContainer",
     },
+    timerContainer,
     form,
     playersCounter
   );
@@ -64,6 +74,7 @@ export function homePage() {
   // root.appendChild(game);
   return game;
 }
+
 function chatHandler(e) {
   e.preventDefault();
   socket.send(JSON.stringify({ message: e.target.children[0].value }));
@@ -90,6 +101,10 @@ function createConnection() {
   if (socket !== null) return;
   //this should be updated if needed when needed depending on which machine we're working with
   socket = new WebSocket("ws://0.0.0.0:3001");
+}
+
+function handlemsgs(setTimer) {
+  if (!setTimer) console.log(typeof setTimer);
 
   socket.onmessage = (e) => {
     const data = JSON.parse(e.data);
@@ -97,6 +112,8 @@ function createConnection() {
     if (!data) return;
     if (data.gameStarted) {
       if (alreadyStarted) return;
+      rout.navigate("/game");
+
       alreadyStarted = true;
       console.log("started");
       // const throttledMove = throttle((e) => {
@@ -118,15 +135,15 @@ function createConnection() {
       moveDelay = allPlayers[localPlayer.name]?.speed || 200;
       throttledMove = throttle(handleMove, moveDelay);
       // EventListener("document", "keydown", (e) => {
-      jsx("document", {
-        onkeydown: (e) => {
-          if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: "drop-bomb" }));
-          }
-          e.preventDefault();
-          throttledMove(e);
-        },
-      });
+      // jsx("document", {
+      //   onkeydown: (e) => {
+      //     if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
+      //       socket.send(JSON.stringify({ type: "drop-bomb" }));
+      //     }
+      //     e.preventDefault();
+      //     throttledMove(e);
+      //   },
+      // });
     }
     if (data.restart) {
       setTimeout(() => {
@@ -151,7 +168,8 @@ function createConnection() {
       }
     }
     if (data.name) {
-      localPlayer.name = data.name;
+      setLocalPlayer({ ...localPlayer, name: data.name });
+      // localPlayer.name = data.name;
     }
     if (data.time) {
       // const T = document.querySelector(".timer");
@@ -164,18 +182,18 @@ function createConnection() {
       // } else {
       //   T.textContent = data.time;
       // }
-      const timer = !timer
-        ? jsx("span", { class: "timer" }, data.time)
-        : data.time;
+      // const timer = !timer
+      //   ?
+      //   : data.time;
+      setTimer(data.time);
     }
 
     if (data.error) {
       const errorContainer = jsx("p", { class: "error" }, data.error); // add data.error
       // errorContainer.textContent = data.error;
       // root.appendChild(errorContainer);
-      render(root, errorContainer);
-      // return errorContainer;
       setTimeout(() => errorContainer.remove(), 3000);
+      return errorContainer;
     }
 
     if (data.message) {
@@ -225,7 +243,6 @@ function createConnection() {
         allPlayers[player.name] = { ...player };
       }
 
-      rout.navigate("/game");
       game.drawMap(allPlayers);
       for (let [key, value] of Object.entries(allPlayers)) {
         console.log(key, value);
@@ -312,22 +329,37 @@ function createConnection() {
     }
   };
 }
-
 createConnection();
 rout.handleRouteChange();
 export function gamehandler() {
   if (game === null) return rout.navigate("/");
+
+  // const [livesCounter, setLivesCounter] = useState(3);
+  // const [firepowerCounter, setFirepowerCounter] = useState(1);
+  // const [bombsCounter, setBombsCounter] = useState(1);
+  // const [speedCounter, setSpeedCounter] = useState(1);
   root.innerHTML = "";
   const hud = jsx("div", { class: "hud" });
   hud.innerHTML = `
+  <p>${Timer}</p>
   <p>❤️ Lives: <span id="hud-lives">${3}</span></p>
   <p>🔥 Firepower: <span id="hud-fire">${1}</span></p>
   <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
   <p>👠 Speed: <span id ="hud-speed">x${1}</span><p>
 `;
+  const lives = jsx("p", {}, "❤️ Lives:", jsx("span", { id: "hud-lives" }, 3));
+
+  // jsx("document", {
+  //   onkeydown: (e) => {
+  //     if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
+  //       socket.send(JSON.stringify({ type: "drop-bomb" }));
+  //     }
+  //     e.preventDefault();
+  //     throttledMove(e);
+  //   },
+  // });
 
   // root.appendChild(hud);
-  render(root, hud);
 
   for (let player in allPlayers) renderPlayer(allPlayers[player]);
 }
@@ -347,6 +379,7 @@ function placePowerUp(x, y, kind) {
     cell.appendChild(powerup);
   }
 }
+
 function getPowerupSymbol(kind) {
   switch (kind) {
     case "bomb":

@@ -6,7 +6,10 @@ import { createHTML, root } from "../dom.js";
 //   walk(oldNode, newNode, null, null);
 // }
 
-export function UpdateDOM(realElemt, oldVdom, newVdom) {
+export function UpdateDOM(realElemt = root, oldVdom, newVdom) {
+  console.log("oldvdom", oldVdom);
+  console.log("newVdom", newVdom);
+
   if (!newVdom) {
     return;
   }
@@ -118,7 +121,7 @@ function updateAttrs(oldNode, newNode, realElemt) {
   for (const [key, value] of Object.entries(newNode)) {
     if (typeof value === "function" && key.startsWith("on"))
       realElemt[key] = value;
-    else realElemt.setAttribute(key, value);
+    realElemt.setAttribute(key, value);
   }
   for (const [key, _] of Object.entries(oldNode)) {
     // console.log(key);
