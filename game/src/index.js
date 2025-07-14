@@ -12,6 +12,7 @@ let socket = null;
 let localPlayer = {};
 let allPlayers = {};
 let game = null;
+let playersCounter;
 
 rout.addrout("/", homePage);
 rout.addrout("/game", gamehandler);
@@ -48,7 +49,7 @@ export function homePage() {
   //   },
   //   form
   // );
-  const playersCounter = jsx("span", { class: "playersCounter" });
+  playersCounter = jsx("span", { class: "playersCounter" });
   const game = jsx(
     "div",
     {
@@ -92,6 +93,7 @@ function createConnection() {
 
   socket.onmessage = (e) => {
     const data = JSON.parse(e.data);
+
     if (!data) return;
     if (data.gameStarted) {
       if (alreadyStarted) return;
@@ -151,27 +153,27 @@ function createConnection() {
     if (data.name) {
       localPlayer.name = data.name;
     }
-    // if (data.time) {
-    //   const T = document.querySelector(".timer");
-    //   if (!T) {
-    //     const timer = jsx("span", {
-    //       class: "timer",
-    //       textContent: data.time,
-    //     });
-    //     root.appendChild(timer);
-    //   } else {
-    //     T.textContent = data.time;
-    //   }
-    // }
-    const timer = !timer
-      ? jsx("span", { class: "timer" }, data.time)
-      : data.time;
+    if (data.time) {
+      // const T = document.querySelector(".timer");
+      // if (!T) {
+      //   const timer = jsx("span", {
+      //     class: "timer",
+      //     textContent: data.time,
+      //   });
+      //   root.appendChild(timer);
+      // } else {
+      //   T.textContent = data.time;
+      // }
+      const timer = !timer
+        ? jsx("span", { class: "timer" }, data.time)
+        : data.time;
+    }
 
     if (data.error) {
       const errorContainer = jsx("p", { class: "error" }, data.error); // add data.error
       // errorContainer.textContent = data.error;
-      root.appendChild(errorContainer);
-      // render(root, errorContainer);
+      // root.appendChild(errorContainer);
+      render(root, errorContainer);
       // return errorContainer;
       setTimeout(() => errorContainer.remove(), 3000);
     }
@@ -187,14 +189,16 @@ function createConnection() {
       );
       const container = jsx("div", {}, message);
       // container.prepend(message);
-      document.querySelector(".gameContainer").appendChild(container);
+      // document.querySelector(".gameContainer").appendChild(container);
+      render(game, container);
     }
     if (data.players) {
-      console.log("data", data);
-
-      document.querySelector(
-        ".playersCounter"
-      ).textContent = `${data.info} ${data.players}`;
+      // document.querySelector(
+      //   ".playersCounter"
+      // ).textContent = `${data.info} ${data.players}`;
+      playersCounter.textContent = playersCounter
+        ? `${data.info} ${data.players}`
+        : "";
     }
     if (data.players >= 2) {
       const chatSection = jsx(
@@ -207,8 +211,9 @@ function createConnection() {
           jsx("input", { class: "chatInput" })
         )
       );
-      document.querySelector(".nickname").remove();
-      document.querySelector(".gameContainer").appendChild(chatSection);
+      // document.querySelector(".nickname").remove();
+      // document.querySelector(".gameContainer").appendChild(chatSection);
+      render(game, chatSection); // remplace this code
     }
 
     // Handle initial map and player info
@@ -226,8 +231,9 @@ function createConnection() {
         renderPlayer(value);
       }
 
-      const form = document.querySelector(".chatForm");
-      console.log(form);
+      //delete this const form
+      // const form = document.querySelector(".chatForm");
+      // console.log(form);
     }
     if (data.type === "player-move") {
       if (!allPlayers[data.name]) return;
