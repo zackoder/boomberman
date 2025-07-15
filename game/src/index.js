@@ -14,6 +14,7 @@ let socket = null;
 let allPlayers = {};
 
 let game = null;
+let players = null;
 let playersCounter;
 
 rout.addrout("/", homePage);
@@ -29,7 +30,6 @@ export function homePage() {
   // console.log(typeof setTimer);
 
   handlemsgs(ManageTimer, ManegLocalPlayer);
-  console.log(ManageTimer.getStat());
 
   const timerContainer = jsx("p", { class: "timer" }, ManageTimer.getStat());
 
@@ -189,7 +189,6 @@ function handlemsgs(setTimer, setLocalPlayer) {
       // const timer = !timer
       //   ?
       //   : data.time;
-      console.log("DATA", data.time);
 
       setTimer.setState(data.time);
     }
@@ -243,17 +242,17 @@ function handlemsgs(setTimer, setLocalPlayer) {
 
     // Handle initial map and player info
     if (data.type === "init") {
-      game = new Game(data.map);
+      game = new Game(data.map,data.players);
+      players=data.palayers;
       for (let player of data.players) {
-        console.log(player);
         allPlayers[player.name] = { ...player };
       }
 
       game.drawMap(allPlayers);
-      for (let [key, value] of Object.entries(allPlayers)) {
-        console.log(key, value);
-        renderPlayer(value);
-      }
+      // for (let [key, value] of Object.entries(allPlayers)) {
+      //   console.log(key, value);
+      //   renderPlayer(value);
+      // }
 
       //delete this const form
       // const form = document.querySelector(".chatForm");
@@ -337,7 +336,8 @@ function handlemsgs(setTimer, setLocalPlayer) {
 createConnection();
 rout.handleRouteChange();
 export function gamehandler() {
-  if (game === null) return rout.navigate("/");
+  
+  if (game === null || players===null) return rout.navigate("/");
 
   // const [livesCounter, setLivesCounter] = useState(3);
   // const [firepowerCounter, setFirepowerCounter] = useState(1);
@@ -351,7 +351,13 @@ export function gamehandler() {
   <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
   <p>👠 Speed: <span id ="hud-speed">x${1}</span><p>
 `;
+
   const lives = jsx("p", {}, "❤️ Lives:", jsx("span", { id: "hud-lives" }, 3));
+  const map = game.drawMap(players)
+
+  
+
+
 
   // jsx("document", {
   //   onkeydown: (e) => {
@@ -366,7 +372,7 @@ export function gamehandler() {
   // root.appendChild(hud);
 
   // for (let player in allPlayers) renderPlayer(allPlayers[player]);
-  return lives
+  return lives,map
 }
 // power-UPS section
 function placePowerUp(x, y, kind) {
@@ -412,6 +418,8 @@ function checkForPowerUp(playerX, playerY) {
 }
 
 function renderPlayer(player) {
+  console.log("Playererrrrrrrr",player);
+  
   if (!player) return;
   document
     .querySelectorAll(`.player-${player.name}`)
