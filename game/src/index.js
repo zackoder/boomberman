@@ -83,9 +83,13 @@ function chatHandler(e) {
   e.preventDefault();
   socket.send(JSON.stringify({ message: e.target.children[0].value }));
 }
+
 let alreadyStarted = false;
 let throttledMove = null;
 function handleMove(e) {
+  console.log("hihi",e);
+  
+  e.preventDefault();
   const keyMap = {
     ArrowUp: "up",
     ArrowDown: "down",
@@ -344,35 +348,46 @@ export function gamehandler() {
   // const [bombsCounter, setBombsCounter] = useState(1);
   // const [speedCounter, setSpeedCounter] = useState(1);
   // root.innerHTML = "";
-  const hud = jsx("div", { class: "hud" });
-  hud.innerHTML = `
-  <p>❤️ Lives: <span id="hud-lives">${3}</span></p>
-  <p>🔥 Firepower: <span id="hud-fire">${1}</span></p>
-  <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
-  <p>👠 Speed: <span id ="hud-speed">x${1}</span><p>
-`;
+  // const hud = jsx("div", { class: "hud" });
+//   hud.innerHTML = `
+//   <p>❤️ Lives: <span id="hud-lives">${3}</span></p>
+//   <p>🔥 Firepower: <span id="hud-fire">${1}</span></p>
+//   <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
+//   <p>👠 Speed: <span id ="hud-speed">x${1}</span><p>
+// `;
+
 
   const lives = jsx("p", {}, "❤️ Lives:", jsx("span", { id: "hud-lives" }, 3));
+  const firepower = jsx("p",{},"🔥 Firepower:",jsx("span",{id:"hud-fire"},1));
+  const Bombs = jsx("p",{},"💣 Bombs: ",jsx("span",{id:"hud-bombs"},1));
+  const Speed = jsx("p",{},"👠 Speed: ",jsx("span",{id:"hud-speed"},1));
+  const hud = jsx("div",{class:"hud"},lives,firepower,Bombs,Speed)
+
   const map = game.drawMap(players)
 
   
 
 
 
-  // jsx("document", {
-  //   onkeydown: (e) => {
-  //     if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
-  //       socket.send(JSON.stringify({ type: "drop-bomb" }));
-  //     }
-  //     e.preventDefault();
-  //     throttledMove(e);
-  //   },
-  // });
+  jsx("document", {
+    onkeydown: (e) => {
+       e.preventDefault();
+       console.log("hihi");
+       
+      if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "drop-bomb" }));
+      }
+     
+      throttledMove(e); 
+    },
+  });
+  const gamee = jsx("div",{},hud,map)
+
 
   // root.appendChild(hud);
 
   // for (let player in allPlayers) renderPlayer(allPlayers[player]);
-  return lives,map
+  return gamee
 }
 // power-UPS section
 function placePowerUp(x, y, kind) {
