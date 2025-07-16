@@ -343,24 +343,14 @@ export function gamehandler() {
   
   if (game === null || players===null) return rout.navigate("/");
 
-  // const [livesCounter, setLivesCounter] = useState(3);
-  // const [firepowerCounter, setFirepowerCounter] = useState(1);
-  // const [bombsCounter, setBombsCounter] = useState(1);
-  // const [speedCounter, setSpeedCounter] = useState(1);
-  // root.innerHTML = "";
-  // const hud = jsx("div", { class: "hud" });
-//   hud.innerHTML = `
-//   <p>❤️ Lives: <span id="hud-lives">${3}</span></p>
-//   <p>🔥 Firepower: <span id="hud-fire">${1}</span></p>
-//   <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
-//   <p>👠 Speed: <span id ="hud-speed">x${1}</span><p>
-// `;
-
-
-  const lives = jsx("p", {}, "❤️ Lives:", jsx("span", { id: "hud-lives" }, 3));
-  const firepower = jsx("p",{},"🔥 Firepower:",jsx("span",{id:"hud-fire"},1));
-  const Bombs = jsx("p",{},"💣 Bombs: ",jsx("span",{id:"hud-bombs"},1));
-  const Speed = jsx("p",{},"👠 Speed: ",jsx("span",{id:"hud-speed"},1));
+  const Managelives = new useState(3);
+  const Mangefirepower = new useState(1);
+  const Managebombs = new useState(1);
+  const Managespeed = new useState(1);
+  const lives = jsx("p", {}, "❤️ Lives:", jsx("span", { id: "hud-lives" }, Managelives.getStat()));
+  const firepower = jsx("p",{},"🔥 Firepower:",jsx("span",{id:"hud-fire"},Mangefirepower.getStat()));
+  const Bombs = jsx("p",{},"💣 Bombs: ",jsx("span",{id:"hud-bombs"},Managebombs.getStat()));
+  const Speed = jsx("p",{},"👠 Speed: ",jsx("span",{id:"hud-speed"},Managespeed.getStat()));
   const hud = jsx("div",{class:"hud"},lives,firepower,Bombs,Speed)
 
   const map = game.drawMap(players)
@@ -369,8 +359,20 @@ export function gamehandler() {
 
 
 
-  jsx("document", {
-    onkeydown: (e) => {
+  // jsx("document", {
+  //   onkeydown: (e) => {
+  //      e.preventDefault();
+  //      console.log("hihi");
+       
+  //     if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
+  //       socket.send(JSON.stringify({ type: "drop-bomb" }));
+  //     }
+     
+  //     throttledMove(e); 
+  //   },
+  //});
+  const gamee = jsx("div",{
+       onkeydown: (e) => {
        e.preventDefault();
        console.log("hihi");
        
@@ -378,10 +380,8 @@ export function gamehandler() {
         socket.send(JSON.stringify({ type: "drop-bomb" }));
       }
      
-      throttledMove(e); 
-    },
-  });
-  const gamee = jsx("div",{},hud,map)
+      //throttledMove(e); 
+    },},hud,map)
 
 
   // root.appendChild(hud);
