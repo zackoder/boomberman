@@ -356,19 +356,19 @@ export function gamehandler() {
   // const [speedCounter, setSpeedCounter] = useState(1);
   // root.innerHTML = "";
   // const hud = jsx("div", { class: "hud" });
-  //   hud.innerHTML = `
-  //   <p>❤️ Lives: <span id="hud-lives">${3}</span></p>
-  //   <p>🔥 Firepower: <span id="hud-fire">${1}</span></p>
-  //   <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
-  //   <p>👠 Speed: <span id ="hud-speed">x${1}</span><p>
-  // `;
+//   hud.innerHTML = `
+//   <p>❤️ Lives: <span id="hud-lives">${3}</span></p>
+//   <p>🔥 Firepower: <span id="hud-fire">${1}</span></p>
+//   <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
+//   <p>👠 Speed: <span id ="hud-speed">x${1}</span><p>
+// `;
 
 
   const lives = jsx("p", {}, "❤️ Lives:", jsx("span", { id: "hud-lives" }, 3));
-  const firepower = jsx("p", {}, "🔥 Firepower:", jsx("span", { id: "hud-fire" }, 1));
-  const Bombs = jsx("p", {}, "💣 Bombs: ", jsx("span", { id: "hud-bombs" }, 1));
-  const Speed = jsx("p", {}, "👠 Speed: ", jsx("span", { id: "hud-speed" }, 1));
-  const hud = jsx("div", { class: "hud" }, lives, firepower, Bombs, Speed)
+  const firepower = jsx("p",{},"🔥 Firepower:",jsx("span",{id:"hud-fire"},1));
+  const Bombs = jsx("p",{},"💣 Bombs: ",jsx("span",{id:"hud-bombs"},1));
+  const Speed = jsx("p",{},"👠 Speed: ",jsx("span",{id:"hud-speed"},1));
+  const hud = jsx("div",{class:"hud"},lives,firepower,Bombs,Speed)
 
   const map = game.drawMap(players)
 
@@ -378,17 +378,17 @@ export function gamehandler() {
 
   jsx("document", {
     onkeydown: (e) => {
-      e.preventDefault();
-      console.log("hihi");
-
+       e.preventDefault();
+       console.log("hihi");
+       
       if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ type: "drop-bomb" }));
       }
-
-      throttledMove(e);
+     
+      throttledMove(e); 
     },
   });
-  const gamee = jsx("div", {}, hud, map)
+  const gamee = jsx("div",{},hud,map)
 
 
   // root.appendChild(hud);
