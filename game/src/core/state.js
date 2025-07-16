@@ -3,8 +3,10 @@ import { render } from "./render.js";
 export class useState {
   constructor(initialValue) {
     this.initialValue = initialValue
+    // this.value = this.initialValue
   }
   setState(newValue) {
+    console.log(newValue);
     this.initialValue = newValue
     render();
   }

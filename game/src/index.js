@@ -10,7 +10,7 @@ let moveDelay = 200;
 const MAX_ROWS = 15;
 export const rout = new Router();
 let socket = null;
-// let localPlayer = {};
+let localPlayer = {};
 let allPlayers = {};
 
 let game = null;
@@ -20,16 +20,16 @@ let playersCounter;
 rout.addrout("/", homePage);
 rout.addrout("/game", gamehandler);
 
+const ManegLocalPlayer = new useState({});
+const ManageTimer = new useState(20);
 export function homePage() {
-  const ManegLocalPlayer = new useState({});
-  const ManageTimer = new useState(20);
   // const Name = useState("")
   // clear the root container
   // root.innerHTML = "";
   // create label
   // console.log(typeof setTimer);
 
-  handlemsgs(ManageTimer, ManegLocalPlayer);
+  handlemsgs();
 
   const timerContainer = jsx("p", { class: "timer" }, ManageTimer.getStat());
 
@@ -61,8 +61,8 @@ export function homePage() {
   //   },
   //   form
   // );
-  // console.log(allPlayers.size)
-  const playersCounter = jsx("span", { class: "playersCounter" }, allPlayers.size || 0);
+  // console.log(ManegLocalPlayer.getStat())
+  const playersCounter = jsx("span", { class: "playersCounter" }, "the nember of players " + (ManegLocalPlayer.getStat().playersCounter || 0));
   const game = jsx(
     "div",
     {
@@ -87,8 +87,8 @@ function chatHandler(e) {
 let alreadyStarted = false;
 let throttledMove = null;
 function handleMove(e) {
-  console.log("hihi",e);
-  
+  console.log("hihi", e);
+
   e.preventDefault();
   const keyMap = {
     ArrowUp: "up",
@@ -112,12 +112,14 @@ function createConnection() {
   socket = new WebSocket("ws://0.0.0.0:3001");
 }
 
-function handlemsgs(setTimer, setLocalPlayer) {
+function handlemsgs() {
 
   socket.onmessage = (e) => {
     const data = JSON.parse(e.data);
 
     if (!data) return;
+    // console.log(data);
+
     if (data.gameStarted) {
       if (alreadyStarted) return;
       rout.navigate("/game");
@@ -140,11 +142,11 @@ function handlemsgs(setTimer, setLocalPlayer) {
       //     );
       //   }
       // }, moveDelay);
-      moveDelay = allPlayers[setLocalPlayer.getStat().name]?.speed || 200;
+      moveDelay = allPlayers[ManegLocalPlayer.getStat().name]?.speed || 200;
       throttledMove = throttle(handleMove, moveDelay);
       // EventListener("document", "keydown", (e) => {
       // jsx("document", {
-      //   onkeydown: (e) => {
+      //   onkeydown: (e) => {players
       //     if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
       //       socket.send(JSON.stringify({ type: "drop-bomb" }));
       //     }
@@ -176,8 +178,8 @@ function handlemsgs(setTimer, setLocalPlayer) {
       }
     }
     if (data.name) {
-      setLocalPlayer.setState({ name: data.name });
-      // localPlayer.name = data.name;
+      ManegLocalPlayer.setState({ name: data.name });
+      localPlayer.name = data.name;
     }
     if (data.time) {
       // const T = document.querySelector(".timer");
@@ -193,8 +195,9 @@ function handlemsgs(setTimer, setLocalPlayer) {
       // const timer = !timer
       //   ?
       //   : data.time;
+      // console.log(setTimer);
 
-      setTimer.setState(data.time);
+      ManageTimer.setState(data.time);
     }
 
     // if (data.error) {
@@ -220,6 +223,10 @@ function handlemsgs(setTimer, setLocalPlayer) {
       render(game, container);
     }
     if (data.players) {
+      console.log(data)
+      ManegLocalPlayer.setState({ ...localPlayer, playersCounter: data.players })
+
+      console.log(ManegLocalPlayer.getStat())
       // document.querySelector(
       //   ".playersCounter"
       // ).textContent = `${data.info} ${data.players}`;
@@ -246,8 +253,8 @@ function handlemsgs(setTimer, setLocalPlayer) {
 
     // Handle initial map and player info
     if (data.type === "init") {
-      game = new Game(data.map,data.players);
-      players=data.palayers;
+      game = new Game(data.map, data.players);
+      players = data.palayers;
       for (let player of data.players) {
         allPlayers[player.name] = { ...player };
       }
@@ -340,8 +347,8 @@ function handlemsgs(setTimer, setLocalPlayer) {
 createConnection();
 rout.handleRouteChange();
 export function gamehandler() {
-  
-  if (game === null || players===null) return rout.navigate("/");
+
+  if (game === null || players === null) return rout.navigate("/");
 
   // const [livesCounter, setLivesCounter] = useState(3);
   // const [firepowerCounter, setFirepowerCounter] = useState(1);
@@ -349,39 +356,39 @@ export function gamehandler() {
   // const [speedCounter, setSpeedCounter] = useState(1);
   // root.innerHTML = "";
   // const hud = jsx("div", { class: "hud" });
-//   hud.innerHTML = `
-//   <p>❤️ Lives: <span id="hud-lives">${3}</span></p>
-//   <p>🔥 Firepower: <span id="hud-fire">${1}</span></p>
-//   <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
-//   <p>👠 Speed: <span id ="hud-speed">x${1}</span><p>
-// `;
+  //   hud.innerHTML = `
+  //   <p>❤️ Lives: <span id="hud-lives">${3}</span></p>
+  //   <p>🔥 Firepower: <span id="hud-fire">${1}</span></p>
+  //   <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
+  //   <p>👠 Speed: <span id ="hud-speed">x${1}</span><p>
+  // `;
 
 
   const lives = jsx("p", {}, "❤️ Lives:", jsx("span", { id: "hud-lives" }, 3));
-  const firepower = jsx("p",{},"🔥 Firepower:",jsx("span",{id:"hud-fire"},1));
-  const Bombs = jsx("p",{},"💣 Bombs: ",jsx("span",{id:"hud-bombs"},1));
-  const Speed = jsx("p",{},"👠 Speed: ",jsx("span",{id:"hud-speed"},1));
-  const hud = jsx("div",{class:"hud"},lives,firepower,Bombs,Speed)
+  const firepower = jsx("p", {}, "🔥 Firepower:", jsx("span", { id: "hud-fire" }, 1));
+  const Bombs = jsx("p", {}, "💣 Bombs: ", jsx("span", { id: "hud-bombs" }, 1));
+  const Speed = jsx("p", {}, "👠 Speed: ", jsx("span", { id: "hud-speed" }, 1));
+  const hud = jsx("div", { class: "hud" }, lives, firepower, Bombs, Speed)
 
   const map = game.drawMap(players)
 
-  
+
 
 
 
   jsx("document", {
     onkeydown: (e) => {
-       e.preventDefault();
-       console.log("hihi");
-       
+      e.preventDefault();
+      console.log("hihi");
+
       if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ type: "drop-bomb" }));
       }
-     
-      throttledMove(e); 
+
+      throttledMove(e);
     },
   });
-  const gamee = jsx("div",{},hud,map)
+  const gamee = jsx("div", {}, hud, map)
 
 
   // root.appendChild(hud);
@@ -433,8 +440,8 @@ function checkForPowerUp(playerX, playerY) {
 }
 
 function renderPlayer(player) {
-  console.log("Playererrrrrrrr",player);
-  
+  console.log("Playererrrrrrrr", player);
+
   if (!player) return;
   document
     .querySelectorAll(`.player-${player.name}`)
