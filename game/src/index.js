@@ -22,16 +22,14 @@ rout.addrout("/game", gamehandler);
 
 const ManegLocalPlayer = new useState({});
 const ManageTimer = new useState(20);
+const Managemessages = new useState([]);
 export function homePage() {
-  // const Name = useState("")
-  // clear the root container
-  // root.innerHTML = "";
-  // create label
-  // console.log(typeof setTimer);
-
+  localPlayer = ManegLocalPlayer.getStat()
   handlemsgs();
+  const currentTime = ManageTimer.getStat()
+  console.log(currentTime);
 
-  const timerContainer = jsx("p", { class: "timer" }, ManageTimer.getStat());
+  const timerContainer = jsx("p", { class: "timer" }, currentTime);
 
   const label = jsx(
     "label",
@@ -48,12 +46,41 @@ export function homePage() {
   });
 
   // create form with label and input as children
+  let currentdata
+  const prevMessages = Managemessages.getStat()
+  const messages = prevMessages.map(msg => {
+    return jsx(
+      "p",
+      {
+        class: "message",
+      },
+      jsx("span", {}, `from: ${msg.sender} `),
+      jsx("span", {}, `${msg.message}`)
+
+    );
+  })
+  console.log(prevMessages);
+
+  const chatSection = jsx(
+    "div",
+    { class: "chatbox" },
+    jsx("div", { class: "messagesContainer" }),
+    jsx(
+      "form",
+      { onsubmit: chatHandler, classList: "chatForm" },
+      jsx("input", { class: "chatInput" })
+    )
+  );
+
+  const container = jsx("div", {}, chatSection, ...messages);
+
   const form = jsx(
     "form",
     { class: "form-nickname", onsubmit: submitName },
     label,
     input
   );
+
   // const game = jsx(
   //   "div",
   //   {
@@ -61,27 +88,31 @@ export function homePage() {
   //   },
   //   form
   // );
-  // console.log(ManegLocalPlayer.getStat())
+  // console.log(ManegLocalPlayer.getStat());
+  if (localPlayer.name) currentdata = container
+
+  else currentdata = form
+  // console.log("local player name", localPlayer.name);
+
+
   const playersCounter = jsx("span", { class: "playersCounter" }, "the nember of players " + (ManegLocalPlayer.getStat().playersCounter || 0));
-  const game = jsx(
+  return jsx(
     "div",
     {
-      class: "gameContainer",
+      //   class: "",
     },
-    form,
+    currentdata,
     timerContainer,
     playersCounter
   );
-  // Render game container into root
-  // render(root, game);
-  // const app = jsx(root, {}, game);
-  // root.appendChild(game);
-  return game;
+  // return game;
 }
 
 function chatHandler(e) {
   e.preventDefault();
-  socket.send(JSON.stringify({ message: e.target.children[0].value }));
+  const input = e.target.children[0]
+  socket.send(JSON.stringify({ message: input.value }));
+  input.value = ""
 }
 
 let alreadyStarted = false;
@@ -113,13 +144,16 @@ function createConnection() {
 }
 
 function handlemsgs() {
-
+  localPlayer = ManegLocalPlayer.getStat()
   socket.onmessage = (e) => {
     const data = JSON.parse(e.data);
 
     if (!data) return;
     // console.log(data);
-
+    if (data.message) {
+      const prevMessages = Managemessages.getStat()
+      Managemessages.setState([data, ...prevMessages])
+    }
     if (data.gameStarted) {
       if (alreadyStarted) return;
       rout.navigate("/game");
@@ -182,46 +216,10 @@ function handlemsgs() {
       localPlayer.name = data.name;
     }
     if (data.time) {
-      // const T = document.querySelector(".timer");
-      // if (!T) {
-      //   const timer = jsx("span", {
-      //     class: "timer",
-      //     textContent: data.time,
-      //   });
-      //   root.appendChild(timer);
-      // } else {
-      //   T.textContent = data.time;
-      // }
-      // const timer = !timer
-      //   ?
-      //   : data.time;
-      // console.log(setTimer);
-
       ManageTimer.setState(data.time);
     }
 
-    // if (data.error) {
-    //   const errorContainer = jsx("p", { class: "error" }, data.error); // add data.error
-    //   // errorContainer.textContent = data.error;
-    //   // root.appendChild(errorContainer);
-    //   setTimeout(() => errorContainer.remove(), 3000);
-    //   return errorContainer;
-    // }
 
-    if (data.message) {
-      const message = jsx(
-        "p",
-        {
-          class: "message",
-          // textContent: `from: ${data.sender} ${data.message}`,
-        },
-        `from: ${data.sender} ${data.message}`
-      );
-      const container = jsx("div", {}, message);
-      // container.prepend(message);
-      // document.querySelector(".gameContainer").appendChild(container);
-      render(game, container);
-    }
     if (data.players) {
       console.log(data)
       ManegLocalPlayer.setState({ ...localPlayer, playersCounter: data.players })
@@ -234,23 +232,6 @@ function handlemsgs() {
       //   ? `${data.info} ${data.players}`
       //   : "";
     }
-    if (data.players >= 2) {
-      const chatSection = jsx(
-        "div",
-        { class: "chatbox" },
-        jsx("div", { class: "messagesContainer" }),
-        jsx(
-          "form",
-          { onsubmit: chatHandler, classList: "chatForm" },
-          jsx("input", { class: "chatInput" })
-        )
-      );
-      // document.querySelector(".nickname").remove();
-      // document.querySelector(".gameContainer").appendChild(chatSection);
-      // render(game, chatSection); // remplace this code
-      return chatSection;
-    }
-
     // Handle initial map and player info
     if (data.type === "init") {
       game = new Game(data.map, data.players);
@@ -356,19 +337,19 @@ export function gamehandler() {
   // const [speedCounter, setSpeedCounter] = useState(1);
   // root.innerHTML = "";
   // const hud = jsx("div", { class: "hud" });
-//   hud.innerHTML = `
-//   <p>❤️ Lives: <span id="hud-lives">${3}</span></p>
-//   <p>🔥 Firepower: <span id="hud-fire">${1}</span></p>
-//   <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
-//   <p>👠 Speed: <span id ="hud-speed">x${1}</span><p>
-// `;
+  //   hud.innerHTML = `
+  //   <p>❤️ Lives: <span id="hud-lives">${3}</span></p>
+  //   <p>🔥 Firepower: <span id="hud-fire">${1}</span></p>
+  //   <p>💣 Bombs: <span id="hud-bombs">${1}</span></p>
+  //   <p>👠 Speed: <span id ="hud-speed">x${1}</span><p>
+  // `;
 
 
   const lives = jsx("p", {}, "❤️ Lives:", jsx("span", { id: "hud-lives" }, 3));
-  const firepower = jsx("p",{},"🔥 Firepower:",jsx("span",{id:"hud-fire"},1));
-  const Bombs = jsx("p",{},"💣 Bombs: ",jsx("span",{id:"hud-bombs"},1));
-  const Speed = jsx("p",{},"👠 Speed: ",jsx("span",{id:"hud-speed"},1));
-  const hud = jsx("div",{class:"hud"},lives,firepower,Bombs,Speed)
+  const firepower = jsx("p", {}, "🔥 Firepower:", jsx("span", { id: "hud-fire" }, 1));
+  const Bombs = jsx("p", {}, "💣 Bombs: ", jsx("span", { id: "hud-bombs" }, 1));
+  const Speed = jsx("p", {}, "👠 Speed: ", jsx("span", { id: "hud-speed" }, 1));
+  const hud = jsx("div", { class: "hud" }, lives, firepower, Bombs, Speed)
 
   const map = game.drawMap(players)
 
@@ -378,17 +359,17 @@ export function gamehandler() {
 
   jsx("document", {
     onkeydown: (e) => {
-       e.preventDefault();
-       console.log("hihi");
-       
+      e.preventDefault();
+      console.log("hihi");
+
       if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ type: "drop-bomb" }));
       }
-     
-      throttledMove(e); 
+
+      throttledMove(e);
     },
   });
-  const gamee = jsx("div",{},hud,map)
+  const gamee = jsx("div", {}, hud, map)
 
 
   // root.appendChild(hud);
