@@ -16,6 +16,7 @@ let allPlayers = {};
 let game = null;
 let players = null;
 let playersCounter;
+//wax tzad
 
 rout.addrout("/", homePage);
 rout.addrout("/game", gamehandler);
