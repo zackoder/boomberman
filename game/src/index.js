@@ -1,6 +1,5 @@
 import { Router } from "./core/router.js";
 import { Game } from "./game.js";
-import { EventListener } from "./core/events.js";
 import { throttle } from "./functions/helperfunctions.js";
 import { jsx, root } from "./core/dom.js";
 import { render } from "./core/render.js";
@@ -143,7 +142,7 @@ function handleMove(e) {
 function createConnection() {
   if (socket !== null) return;
   //this should be updated if needed when needed depending on which machine we're working with
-  socket = new WebSocket("ws://0.0.0.0:3001");
+  socket = new WebSocket("ws://localhost:3001");
 }
 
 function handlemsgs() {
@@ -163,34 +162,9 @@ function handlemsgs() {
 
       alreadyStarted = true;
       console.log("started");
-      // const throttledMove = throttle((e) => {
-      //   const keyMap = {
-      //     ArrowUp: "up",
-      //     ArrowDown: "down",
-      //     ArrowLeft: "left",
-      //     ArrowRight: "right",
-      //   };
-      //   if (keyMap[e.key] && socket?.readyState === WebSocket.OPEN) {
-      //     socket.send(
-      //       JSON.stringify({
-      //         type: "move",
-      //         dir: keyMap[e.key],
-      //       })
-      //     );
-      //   }
-      // }, moveDelay);
       moveDelay = allPlayers[ManegLocalPlayer.getStat().name]?.speed || 200;
       throttledMove = throttle(handleMove, moveDelay);
-      // EventListener("document", "keydown", (e) => {
-      // jsx("document", {
-      //   onkeydown: (e) => {players
-      //     if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
-      //       socket.send(JSON.stringify({ type: "drop-bomb" }));
-      //     }
-      //     e.preventDefault();
-      //     throttledMove(e);
-      //   },
-      // });
+      
     }
     if (data.restart) {
       setTimeout(() => {
@@ -299,10 +273,8 @@ function handlemsgs() {
     if (data.type === "power-up-collected") {
       removePowerUp(data.x, data.y);
       if (data.name === localPlayer.name) {
-        document.querySelector("#hud-fire").textContent =
-          data.newStats.firepower;
-        document.querySelector("#hud-bombs").textContent =
-          data.newStats.maxBombs;
+        document.querySelector("#hud-fire").textContent = data.newStats.firepower;
+        document.querySelector("#hud-bombs").textContent = data.newStats.maxBombs;
         document.querySelector("#hud-speed").textContent = `x${200 / data.newStats.speed
           }`;
       }
