@@ -25,10 +25,7 @@ const MAX_FIREPOWER = 2;
 const MAX_BOMBS = 3;
 const MAX_SPEED = 2;
 const POWER_UP_DURATION = 30000;
-const info = [
-  "wait for other players to join",
-  "you will start after a few secends",
-];
+
 let gameStat = false;
 
 const players = new Map();
@@ -87,7 +84,7 @@ ws.on("request", (req) => {
       };
       players.set(connection, player);
       if (map.length === 0) createmap();
-      let tmp = 3
+      let tmp = 20
       let interval = null;
       let currentTime = tmp;
       let waiting = 10;
@@ -143,7 +140,6 @@ ws.on("request", (req) => {
         {
           name: data.name,
           players: players.size,
-          info: info[players.size < 2 ? 0 : 1],
         },
         players
       );
@@ -151,86 +147,7 @@ ws.on("request", (req) => {
 
     // Send initial map and player info
     if (data.type === "move") {
-      if (!players.has(connection)) {
-        return connection.sendUTF(
-          JSON.stringify({ error: "Unregistered player" })
-        );
-      }
-      const player = players.get(connection);
-      if (!player || player.dead) return;
-
-      const { dir } = data;
-      const dirs = {
-        up: { dx: 0, dy: -1 },
-        down: { dx: 0, dy: 1 },
-        left: { dx: -1, dy: 0 },
-        right: { dx: 1, dy: 0 },
-      };
-
-      const direction = dirs[dir];
-      if (!direction) return;
-
-      const { dx, dy } = direction;
-      const newX = player.x + dx;
-      const newY = player.y + dy;
-
-      if (map[newY]?.[newX] === 0) {
-        player.x = newX;
-        player.y = newY;
-
-        broadcast(
-          {
-            type: "player-move",
-            name: player.name,
-            x: newX,
-            y: newY,
-            players,
-          },
-          players
-        );
-      }
-      const powerUpIndex = powerUps.findIndex(
-        (p) => p.x === player.x && p.y === player.y
-      );
-      if (powerUpIndex !== -1) {
-        const powerUp = powerUps.splice(powerUpIndex, 1)[0];
-
-        if (powerUp.type === "firepower") {
-          applyPowerUp(
-            player,
-            "firepower",
-            MAX_FIREPOWER,
-            POWER_UP_DURATION,
-            players
-          );
-        } else if (powerUp.type === "bomb") {
-          applyPowerUp(
-            player,
-            "maxBombs",
-            MAX_BOMBS,
-            POWER_UP_DURATION,
-            players
-          );
-        } else if (powerUp.type === "speed") {
-          applyPowerUp(player, "speed", null, POWER_UP_DURATION, players);
-        }
-
-        broadcast(
-          {
-            type: "power-up-collected",
-            name: player.name,
-            x: player.x,
-            y: player.y,
-            powerUp: powerUp.type,
-            newStats: {
-              firepower: player.firepower,
-              maxBombs: player.maxBombs,
-              speed: player.speed,
-            },
-          },
-          players
-        );
-      }
+      handlePlayerMovment()
     }
     if (data.type === "drop-bomb") {
       const player = players.get(connection);
@@ -276,6 +193,89 @@ ws.on("request", (req) => {
     players.delete(connection);
   });
 });
+
+function handlePlayerMovment(connection) {
+  if (!players.has(connection)) {
+    return connection.sendUTF(
+      JSON.stringify({ error: "Unregistered player" })
+    );
+  }
+  const player = players.get(connection);
+  if (!player || player.dead) return;
+
+  const { dir } = data;
+  const dirs = {
+    up: { dx: 0, dy: -1 },
+    down: { dx: 0, dy: 1 },
+    left: { dx: -1, dy: 0 },
+    right: { dx: 1, dy: 0 },
+  };
+
+  const direction = dirs[dir];
+  if (!direction) return;
+
+  const { dx, dy } = direction;
+  const newX = player.x + dx;
+  const newY = player.y + dy;
+
+  if (map[newY]?.[newX] === 0) {
+    player.x = newX;
+    player.y = newY;
+
+    broadcast(
+      {
+        type: "player-move",
+        name: player.name,
+        x: newX,
+        y: newY,
+        players,
+      },
+      players
+    );
+  }
+  const powerUpIndex = powerUps.findIndex(
+    (p) => p.x === player.x && p.y === player.y
+  );
+  if (powerUpIndex !== -1) {
+    const powerUp = powerUps.splice(powerUpIndex, 1)[0];
+
+    if (powerUp.type === "firepower") {
+      applyPowerUp(
+        player,
+        "firepower",
+        MAX_FIREPOWER,
+        POWER_UP_DURATION,
+        players
+      );
+    } else if (powerUp.type === "bomb") {
+      applyPowerUp(
+        player,
+        "maxBombs",
+        MAX_BOMBS,
+        POWER_UP_DURATION,
+        players
+      );
+    } else if (powerUp.type === "speed") {
+      applyPowerUp(player, "speed", null, POWER_UP_DURATION, players);
+    }
+
+    broadcast(
+      {
+        type: "power-up-collected",
+        name: player.name,
+        x: player.x,
+        y: player.y,
+        powerUp: powerUp.type,
+        newStats: {
+          firepower: player.firepower,
+          maxBombs: player.maxBombs,
+          speed: player.speed,
+        },
+      },
+      players
+    );
+  }
+}
 
 function createmap() {
   let row = [];

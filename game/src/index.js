@@ -1,6 +1,5 @@
 import { Router } from "./core/router.js";
 import { Game } from "./game.js";
-import { EventListener } from "./core/events.js";
 import { throttle } from "./functions/helperfunctions.js";
 import { jsx, root } from "./core/dom.js";
 import { render } from "./core/render.js";
@@ -29,7 +28,6 @@ export function homePage() {
   localPlayer = ManegLocalPlayer.getStat()
   handlemsgs();
   const currentTime = ManageTimer.getStat()
-  console.log(currentTime);
 
   const timerContainer = jsx("p", { class: "timer" }, "Timer : ", currentTime);
 
@@ -61,7 +59,6 @@ export function homePage() {
 
     );
   })
-  console.log(prevMessages);
 
   const chatSection = jsx(
     "div",
@@ -96,16 +93,25 @@ export function homePage() {
   else currentdata = form
   // console.log("local player name", localPlayer.name);
 
-
-  const playersCounter = jsx("span", { class: "playersCounter" }, "the number of players : " + (ManegLocalPlayer.getStat().playersCounter || 0));
+  const info = [
+    "wait for other players to join",
+    "you will start after the counter ends",
+  ];
+  const playersCounternbr = ManegLocalPlayer.getStat().playersCounter
+  const playersCounter = jsx("p", { class: "playersCounter" }, "the current number of player(s) is; " + (playersCounternbr ? playersCounternbr : 0));
+  let pinfo
+  if (playersCounternbr) {
+    pinfo = jsx("p", {}, info[playersCounternbr > 1 ? 1 : 0]);
+  }
   return jsx("div", { class: "home-page", },
     jsx("div",
       {
         class: "gameInfo",
       },
       localPlayer.name ? "" : form,
+      playersCounter,
+      pinfo ? pinfo : "",
       timerContainer,
-      playersCounter
     ),
     localPlayer.name ? container : "",
   );
@@ -152,7 +158,7 @@ function handlemsgs() {
     const data = JSON.parse(e.data);
 
     if (!data) return;
-    console.log("__________________________----------------", data);
+    // console.log("__________________________----------------", data);
     if (data.message) {
       const prevMessages = Managemessages.getStat()
       Managemessages.setState([data, ...prevMessages])
@@ -239,6 +245,8 @@ function handlemsgs() {
     if (data.type === "init") {
       game = new Game(data.map, data.players);
       players = data.palayers;
+      console.log(players);
+
       for (let player of data.players) {
         allPlayers[player.name] = { ...player };
       }
@@ -348,7 +356,6 @@ export function gamehandler() {
 
   const map = game.drawMap(players)
 
-
   const gamee = jsx("div", {
     tabIndex: 0,
     onkeydown: (e) => {
@@ -396,6 +403,7 @@ function getPowerupSymbol(kind) {
       return "";
   }
 }
+
 function checkForPowerUp(playerX, playerY) {
   const index = playerY * MAX_ROWS + playerX;
   const cell = document.querySelectorAll(".gameContainer > div")[index];
