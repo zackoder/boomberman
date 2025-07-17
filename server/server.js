@@ -87,10 +87,10 @@ ws.on("request", (req) => {
       };
       players.set(connection, player);
       if (map.length === 0) createmap();
-
+      let tmp = 3
       let interval = null;
-      let currentTime = 20;
-      let waiting = 0;
+      let currentTime = tmp;
+      let waiting = 10;
 
       if (players.size == 2) {
         interval = setInterval(() => {
@@ -98,7 +98,7 @@ ws.on("request", (req) => {
           if (players.size === 4 || currentTime <= 0) {
             clearInterval(interval);
             gameStat = true;
-            currentTime = 20;
+            currentTime = tmp;
             broadcast(
               { type: "init", map, players: [...players.values()] },
               players
@@ -108,7 +108,7 @@ ws.on("request", (req) => {
           if (players.size < 2) {
             clearInterval(interval);
             clearInterval(beforestart)
-            currentTime = 20;
+            currentTime = tmp;
             broadcast({ time: currentTime }, players);
             return;
           }
@@ -117,26 +117,26 @@ ws.on("request", (req) => {
         }, 1000);
       }
       let beforestart = null;
-      // if (!beforestart) {
-      beforestart = setInterval(() => {
-        console.log("test", gameStat);
-        if (gameStat) {
-          console.log("conting donw befor the game start", waiting);
-          if (players.size < 2) {
-            broadcast({ players: players.size, restart: "restart" }, players);
-            clearInterval(beforestart);
-            return;
+      if (!beforestart) {
+        beforestart = setInterval(() => {
+          console.log("test", gameStat);
+          if (gameStat) {
+            console.log("conting donw befor the game start", waiting);
+            if (players.size < 2) {
+              broadcast({ players: players.size, restart: "restart" }, players);
+              clearInterval(beforestart);
+              return;
+            }
+            if (waiting <= 0) {
+              broadcast({ gameStarted: true }, players);
+              clearInterval(beforestart);
+              return;
+            }
+            broadcast({ time: waiting }, players);
+            waiting--;
           }
-          if (waiting <= 0) {
-            broadcast({ gameStarted: true }, players);
-            clearInterval(beforestart);
-            return;
-          }
-          broadcast({ time: waiting });
-          waiting--;
-        }
-      }, 1000);
-      // }
+        }, 1000);
+      }
     }
     if (!gameStat) {
       broadcast(
@@ -184,7 +184,7 @@ ws.on("request", (req) => {
             name: player.name,
             x: newX,
             y: newY,
-            // players,
+            players,
           },
           players
         );

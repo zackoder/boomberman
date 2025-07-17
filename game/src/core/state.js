@@ -6,7 +6,6 @@ export class useState {
     // this.value = this.initialValue
   }
   setState(newValue) {
-    console.log(newValue);
     if (typeof newValue === "function") this.initialValue = newValue()
     else this.initialValue = newValue
     render();

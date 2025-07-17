@@ -73,7 +73,6 @@ export function createHTML(element = root, Vdom) {
 export const root = document.getElementById("root");
 
 export function jsx(tag, attrs, ...children) {
-  if (tag === "p") console.log(...children);
 
   if (typeof tag === "function") {
     return tag(attrs, ...children);

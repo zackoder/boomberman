@@ -3,7 +3,7 @@ import { render } from "./core/render.js";
 export class Game {
   constructor(map, players) {
     if (players.length < 2) {
-      return 
+      return
     }
 
     this.map = map;
@@ -62,16 +62,18 @@ export class Game {
 
     const gameContainer = jsx(
       "div",
-      { class: "gameContainer" ,  onkeydown: (e) => {
-       e.preventDefault();
-       console.log("hihi");
-       
-      if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: "drop-bomb" }));
-      }
-     
-      throttledMove(e); 
-    }},
+      {
+        class: "gameContainer",
+        // onkeydown: (e) => {
+        //   e.preventDefault();
+        //   console.log("hihi");
+        //   if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
+        //     socket.send(JSON.stringify({ type: "drop-bomb" }));
+        //   }
+
+        //   throttledMove(e);
+        // }
+      },
       ...mapElements
     );
 
