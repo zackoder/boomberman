@@ -17,17 +17,20 @@ let game = null;
 let players = null;
 let playersCounter;
 //wax tzad
-
 rout.addrout("/", homePage);
+
 rout.addrout("/game", gamehandler);
 
 const ManegLocalPlayer = new useState({});
 const ManageTimer = new useState(20);
 const Managemessages = new useState([]);
 const ManegAllPlayers = new useState({});
+const ManageError = new useState("")
 
 export function homePage() {
   localPlayer = ManegLocalPlayer.getStat()
+  console.log(localPlayer,"fghfytfty");
+  
   handlemsgs();
   const currentTime = ManageTimer.getStat()
   console.log(currentTime);
@@ -76,6 +79,7 @@ export function homePage() {
   );
 
   const container = jsx("div", { class: "container-chat" }, chatSection, ...messages);
+  const err0 = jsx ("div",{class : "err"},ManageError.getStat());
 
   const form = jsx(
     "form",
@@ -106,7 +110,8 @@ export function homePage() {
       },
       localPlayer.name ? "" : form,
       timerContainer,
-      playersCounter
+      playersCounter,
+      err0
     ),
     localPlayer.name ? container : "",
   );
@@ -215,13 +220,21 @@ function handlemsgs() {
         render(root, err);
       }
     }
+    if (data.error){
+      console.log("errrrrrrrrrrrrrrrrrrrrrrr");
+      
+      ManageError.setState(data.error);
+    }
     if (data.name) {
       ManegLocalPlayer.setState({ name: data.name });
       localPlayer.name = data.name;
+      ManageError.setState("");
+
     }
     if (data.time) {
       ManageTimer.setState(data.time);
     }
+
 
 
     if (data.players) {
