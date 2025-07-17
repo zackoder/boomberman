@@ -9,7 +9,9 @@ export class Game {
     this.map = map;
     this.players = players;
   }
-
+  setNewMap(map) {
+    this.map = map;
+  }
   drawMap() {
     const mapElements = [];
 
@@ -28,7 +30,7 @@ export class Game {
     //   playerPositionMap[key] = player;
     // }
     // });
-    console.log(this.map[1][1]);
+    // console.log(this.map[1][1]);
 
     for (let row = 0; row < this.map.length; row++) {
       for (let col = 0; col < this.map[row].length; col++) {
@@ -46,7 +48,7 @@ export class Game {
             "div",
             {
               class: `player player-${this.players[cell - 3].name}`,
-              style: `background-color: ${this.players[cell-3].color}`,
+              style: `background-color: ${this.players[cell - 3].color}`,
             },
             jsx("div", { class: "name-label" }, this.players[cell - 3].name)
           );

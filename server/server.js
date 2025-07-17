@@ -89,7 +89,7 @@ ws.on("request", (req) => {
       };
       players.set(connection, player);
       if (map.length === 0) createmap();
-      let tmp = 3
+      let tmp = 3;
       let interval = null;
       let currentTime = tmp;
       let waiting = 3;
@@ -102,14 +102,18 @@ ws.on("request", (req) => {
             gameStat = true;
             currentTime = tmp;
             broadcast(
-              { type: "init", map: generateMapSnapshot(), players: [...players.values()] },
+              {
+                type: "init",
+                map: generateMapSnapshot(),
+                players: [...players.values()],
+              },
               players
             );
-            return
+            return;
           }
           if (players.size < 2) {
             clearInterval(interval);
-            clearInterval(beforestart)
+            clearInterval(beforestart);
             currentTime = tmp;
             broadcast({ time: currentTime }, players);
             return;
@@ -177,16 +181,15 @@ ws.on("request", (req) => {
       const newY = player.y + dy;
 
       if (map[newY]?.[newX] === 0) {
+        map[player.y][player.x] = 0;
+        map[newY][newX] = player.id;
         player.x = newX;
         player.y = newY;
 
         broadcast(
           {
             type: "player-move",
-            name: player.name,
-            x: newX,
-            y: newY,
-            players,
+            newMap: map,
           },
           players
         );
@@ -198,9 +201,20 @@ ws.on("request", (req) => {
         const powerUp = powerUps.splice(powerUpIndex, 1)[0];
 
         if (powerUp.type === "firepower") {
-          applyPowerUp(player,"firepower",MAX_FIREPOWER,POWER_UP_DURATION,players);
+          applyPowerUp(
+            player,
+            "firepower",
+            MAX_FIREPOWER,
+            POWER_UP_DURATION,
+            players
+          );
         } else if (powerUp.type === "bomb") {
-          applyPowerUp(player,"maxBombs",MAX_BOMBS,POWER_UP_DURATION,players
+          applyPowerUp(
+            player,
+            "maxBombs",
+            MAX_BOMBS,
+            POWER_UP_DURATION,
+            players
           );
         } else if (powerUp.type === "speed") {
           applyPowerUp(player, "speed", null, POWER_UP_DURATION, players);
@@ -329,9 +343,9 @@ server.listen(3001, () => {
   console.log("Server running at http://0.0.0.0:3000");
 });
 function generateMapSnapshot() {
-  const snapshot = map.map(row => [...row]); 
+  const snapshot = map.map((row) => [...row]);
   for (const player of players.values()) {
-    snapshot[player.y][player.x] = player.id;  
+    snapshot[player.y][player.x] = player.id;
   }
 
   return snapshot;

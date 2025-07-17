@@ -25,10 +25,10 @@ const Managemessages = new useState([]);
 const ManegAllPlayers = new useState({});
 
 export function homePage() {
-  localPlayer = ManegLocalPlayer.getStat()
+  localPlayer = ManegLocalPlayer.getStat();
   handlemsgs();
-  const currentTime = ManageTimer.getStat()
-  console.log(currentTime);
+  const currentTime = ManageTimer.getStat();
+  // console.log(currentTime);
 
   const timerContainer = jsx("p", { class: "timer" }, "Timer : ", currentTime);
 
@@ -43,13 +43,13 @@ export function homePage() {
   // create input
   const input = jsx("input", {
     id: "nameInpt",
-    class: "input"
+    class: "input",
   });
 
   // create form with label and input as children
-  let currentdata
-  const prevMessages = Managemessages.getStat()
-  const messages = prevMessages.map(msg => {
+  let currentdata;
+  const prevMessages = Managemessages.getStat();
+  const messages = prevMessages.map((msg) => {
     return jsx(
       "p",
       {
@@ -57,9 +57,8 @@ export function homePage() {
       },
       jsx("span", {}, `from ${msg.sender} : `),
       jsx("span", {}, `${msg.message}`)
-
     );
-  })
+  });
   console.log(prevMessages);
 
   const chatSection = jsx(
@@ -73,7 +72,12 @@ export function homePage() {
     )
   );
 
-  const container = jsx("div", { class: "container-chat" }, chatSection, ...messages);
+  const container = jsx(
+    "div",
+    { class: "container-chat" },
+    chatSection,
+    ...messages
+  );
 
   const form = jsx(
     "form",
@@ -90,15 +94,21 @@ export function homePage() {
   //   form
   // );
   // console.log(ManegLocalPlayer.getStat());
-  if (localPlayer.name) currentdata = container
-
-  else currentdata = form
+  if (localPlayer.name) currentdata = container;
+  else currentdata = form;
   // console.log("local player name", localPlayer.name);
 
-
-  const playersCounter = jsx("span", { class: "playersCounter" }, "the number of players : " + (ManegLocalPlayer.getStat().playersCounter || 0));
-  return jsx("div", { class: "home-page", },
-    jsx("div",
+  const playersCounter = jsx(
+    "span",
+    { class: "playersCounter" },
+    "the number of players : " +
+      (ManegLocalPlayer.getStat().playersCounter || 0)
+  );
+  return jsx(
+    "div",
+    { class: "home-page" },
+    jsx(
+      "div",
       {
         class: "gameInfo",
       },
@@ -106,16 +116,16 @@ export function homePage() {
       timerContainer,
       playersCounter
     ),
-    localPlayer.name ? container : "",
+    localPlayer.name ? container : ""
   );
   // return game;
 }
 
 function chatHandler(e) {
   e.preventDefault();
-  const input = e.target.children[0]
+  const input = e.target.children[0];
   socket.send(JSON.stringify({ message: input.value }));
-  input.value = ""
+  input.value = "";
 }
 
 let alreadyStarted = false;
@@ -144,27 +154,36 @@ function createConnection() {
   //this should be updated if needed when needed depending on which machine we're working with
   socket = new WebSocket("ws://localhost:3001");
 }
+const ManageMap = new useState([]);
 
 function handlemsgs() {
-  localPlayer = ManegLocalPlayer.getStat()
+  localPlayer = ManegLocalPlayer.getStat();
   socket.onmessage = (e) => {
     const data = JSON.parse(e.data);
 
     if (!data) return;
     console.log("__________________________----------------", data);
+    if (data.newMap) {
+      game.setNewMap(data.newMap);
+    }
     if (data.message) {
-      const prevMessages = Managemessages.getStat()
-      Managemessages.setState([data, ...prevMessages])
+      const prevMessages = Managemessages.getStat();
+      Managemessages.setState([data, ...prevMessages]);
     }
     if (data.gameStarted) {
       if (alreadyStarted) return;
+      // requestAnimationFrame(() => {
+      // ManageMap.getStat();
+      // console.log("hi");
       rout.navigate("/game");
+      // });
+      // rout.navigate("/game");
+      // requestAnimationFrame(game.drawMap(allPlayers));
 
       alreadyStarted = true;
       console.log("started");
       moveDelay = allPlayers[ManegLocalPlayer.getStat().name]?.speed || 200;
       throttledMove = throttle(handleMove, moveDelay);
-      
     }
     if (data.restart) {
       setTimeout(() => {
@@ -196,10 +215,12 @@ function handlemsgs() {
       ManageTimer.setState(data.time);
     }
 
-
     if (data.players) {
       // console.log(data)
-      ManegLocalPlayer.setState({ ...localPlayer, playersCounter: data.players })
+      ManegLocalPlayer.setState({
+        ...localPlayer,
+        playersCounter: data.players,
+      });
 
       // console.log(ManegLocalPlayer.getStat())
       // document.querySelector(
@@ -216,8 +237,8 @@ function handlemsgs() {
       for (let player of data.players) {
         allPlayers[player.name] = { ...player };
       }
-      ManegAllPlayers.setState(allPlayers)
-
+      ManegAllPlayers.setState(allPlayers);
+      //  requestAnimationFrame(game.drawMap(allPlayers))
       game.drawMap(allPlayers);
       // for (let [key, value] of Object.entries(allPlayers)) {
       //   console.log(key, value);
@@ -231,7 +252,7 @@ function handlemsgs() {
     if (data.type === "player-move") {
       console.log(data);
 
-      ManegAllPlayers.setState(data.palayers)
+      ManegAllPlayers.setState(data.palayers);
       // ManegLocalPlayer.setState()
       // if (!allPlayers[data.name]) return;
       // allPlayers[data.name].x = data.x;
@@ -273,10 +294,13 @@ function handlemsgs() {
     if (data.type === "power-up-collected") {
       removePowerUp(data.x, data.y);
       if (data.name === localPlayer.name) {
-        document.querySelector("#hud-fire").textContent = data.newStats.firepower;
-        document.querySelector("#hud-bombs").textContent = data.newStats.maxBombs;
-        document.querySelector("#hud-speed").textContent = `x${200 / data.newStats.speed
-          }`;
+        document.querySelector("#hud-fire").textContent =
+          data.newStats.firepower;
+        document.querySelector("#hud-bombs").textContent =
+          data.newStats.maxBombs;
+        document.querySelector("#hud-speed").textContent = `x${
+          200 / data.newStats.speed
+        }`;
       }
     }
     if (data.type === "power-up-expired") {
@@ -308,35 +332,57 @@ function handlemsgs() {
 createConnection();
 rout.handleRouteChange();
 export function gamehandler() {
-
+  // startanimating();
   if (game === null || players === null) return rout.navigate("/");
   console.log("test");
 
   const lives = jsx("p", {}, "❤️ Lives:", jsx("span", { id: "hud-lives" }, 3));
-  const firepower = jsx("p", {}, "🔥 Firepower:", jsx("span", { id: "hud-fire" }, 1));
+  const firepower = jsx(
+    "p",
+    {},
+    "🔥 Firepower:",
+    jsx("span", { id: "hud-fire" }, 1)
+  );
   const Bombs = jsx("p", {}, "💣 Bombs: ", jsx("span", { id: "hud-bombs" }, 1));
   const Speed = jsx("p", {}, "👠 Speed: ", jsx("span", { id: "hud-speed" }, 1));
-  const hud = jsx("div", { class: "hud" }, lives, firepower, Bombs, Speed)
+  const hud = jsx("div", { class: "hud" }, lives, firepower, Bombs, Speed);
 
-  const map = game.drawMap(players)
+  const map = game.drawMap(players);
 
+  const gamee = jsx(
+    "div",
+    {
+      tabIndex: 0,
+      onkeydown: (e) => {
+        // console.log("hihi");
+        if (e.key !== "F5") e.preventDefault();
 
-  const gamee = jsx("div", {
-    tabIndex: 0,
-    onkeydown: (e) => {
-      // console.log("hihi");
-      if (e.key !== "F5") e.preventDefault();
+        if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: "drop-bomb" }));
+        }
 
-      if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: "drop-bomb" }));
-      }
-
-      throttledMove(e);
-    }
-  }, hud, map)
-
-  return gamee
+        throttledMove(e);
+      },
+    },
+    hud,
+    map
+  );
+  return gamee;
 }
+
+function test() {
+  console.log("hello");
+  requestAnimationFrame(test);
+}
+test();
+// requestAnimationFrame(test);
+// function startanimating() {
+//   rout.navigate("/game");
+//   // game.drawMap();
+// }
+
+// function drawmap() {
+// }
 // power-UPS section
 function placePowerUp(x, y, kind) {
   const index = y * MAX_ROWS + x;
@@ -410,12 +456,12 @@ function checkForPowerUp(playerX, playerY) {
 function submitName(e) {
   e.preventDefault();
 
-  const nameInput = e.target.children[1]
+  const nameInput = e.target.children[1];
   // if (nameInput)
   // console.log(ipt);
   if (!nameInput) return;
   const name = nameInput.value.trim();
-  nameInput.value = ""
+  nameInput.value = "";
   if (!name) return;
   socket.send(JSON.stringify({ type: "name", name }));
 }
