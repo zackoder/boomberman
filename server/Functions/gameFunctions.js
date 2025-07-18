@@ -112,7 +112,7 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
     {
       type: "bomb-exploded",
       explosionTiles,
-      map,
+      newMap: map,
     },
     players
   );
@@ -124,8 +124,7 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
         map[tile.y][tile.x] = 0;
       }
     }
-    broadcast({ type: "explosion-cleared", map }, players);
-    // console.log("nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",map);
+    broadcast({ type: "explosion-cleared",newMap: map }, players);
   }, 500);
 }
 function applyPowerUp(player, stat, max, duration, players) {
