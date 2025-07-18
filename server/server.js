@@ -121,6 +121,11 @@ ws.on("request", (req) => {
         }, 1000);
       }
       let beforestart = null;
+      if (players.size < 2) {
+        broadcast({ players: players.size, restart: "restart" }, players);
+        clearInterval(beforestart);
+        return;
+      }
       if (!beforestart) {
         beforestart = setInterval(() => {
           console.log("test", gameStat);
@@ -161,6 +166,7 @@ ws.on("request", (req) => {
         );
       }
       const player = players.get(connection);
+
       if (!player || player.dead) return;
 
       const { dir } = data;
@@ -177,26 +183,28 @@ ws.on("request", (req) => {
       const { dx, dy } = direction;
       const newX = player.x + dx;
       const newY = player.y + dy;
-      const currentcell = map[newY]?.[newX];
+      const newPosicell = map[newY]?.[newX];
+      const currentcell = map[player.y][player.x];
 
-      if (currentcell !== 1 && currentcell !== 2 && currentcell !== 10) {
-        if (currentcell >= 7 || currentcell <= 9) {
+      if (newPosicell !== 1 && newPosicell !== 2 && newPosicell !== 10) {
+        if (newPosicell >= 7 || newPosicell <= 9) {
           applyPowerUp(
             player,
-            POWER_UP_TYPES[currentcell - 6],
+            POWER_UP_TYPES[newPosicell - 6],
             MAX_POWERUP,
             POWER_UP_DURATION,
             players
           );
         }
-        if (currentcell >= 3 || currentcell <= 6){
-          
+        
+        if (currentcell >= 3 && currentcell <= 6) {
           for (const p of players.values()) {
-            if (p.id != player.id && p.y === player.y && player.x ===p.x  ) {
+            if (p.y === player.y && player.x === p.x && p.id !== player.id) {
               map[player.y][player.x] = p.id;
-
-              break
-            } else {
+              console.log("return to 0", p);
+              break;
+            } else if (p.id !== player.id) {
+              console.log(p);
               map[player.y][player.x] = 0;
               break;
             }

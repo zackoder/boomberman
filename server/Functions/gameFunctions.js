@@ -1,6 +1,6 @@
 const { broadcast } = require("./helperFunctions");
 const MAX_ROWS = 15;
- const POWER_UP_TYPES = ["firepower", "bomb", "speed"];
+const POWER_UP_TYPES = ["firepower", "bomb", "speed"];
 const powerUps = [];
 const DEFAULT_STATS = {
   firepower: 1,
@@ -9,18 +9,20 @@ const DEFAULT_STATS = {
 };
 
 function HandleExplosion(map, x, y, owner, players, bombs) {
-  const index = bombs.findIndex(b => b.x === x && b.y === y && b.owner === owner);
+  const index = bombs.findIndex(
+    (b) => b.x === x && b.y === y && b.owner === owner
+  );
   if (index !== -1) bombs.splice(index, 1);
 
   const explosionTiles = [{ x, y }];
   const directions = [
     { dx: 0, dy: -1 }, // up
-    { dx: 0, dy: 1 },  // down
+    { dx: 0, dy: 1 }, // down
     { dx: -1, dy: 0 }, // left
-    { dx: 1, dy: 0 },  // right
+    { dx: 1, dy: 0 }, // right
   ];
 
-  const player = [...players.values()].find(p => p.name === owner);
+  const player = [...players.values()].find((p) => p.name === owner);
   const firepower = player?.firepower || 1;
 
   for (const { dx, dy } of directions) {
@@ -41,15 +43,20 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
         map[ny][nx] = 0;
 
         if (Math.random() < 0.3) {
-        const  powerupindex = Math.floor(Math.random() * POWER_UP_TYPES.length)
+          const powerupindex = Math.floor(
+            Math.random() * POWER_UP_TYPES.length
+          );
           const type = POWER_UP_TYPES[powerupindex];
           powerUps.push({ x: nx, y: ny, type });
-         map[ny][nx] = 6+powerupindex;
+          map[ny][nx] = 6 + powerupindex;
 
-          broadcast({
-            type: "powerup-appeared",
-            map: map,
-          }, players);
+          broadcast(
+            {
+              type: "powerup-appeared",
+              newMap: map,
+            },
+            players
+          );
         }
 
         break; // stop fire after hitting soft wall
@@ -68,40 +75,47 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
 
   // 💀 Handle damage
   for (const [conn, player] of players.entries()) {
-    if (explosionTiles.some(t => t.x === player.x && t.y === player.y)) {
+    if (explosionTiles.some((t) => t.x === player.x && t.y === player.y)) {
       player.lives--;
 
-      conn.sendUTF(JSON.stringify({
-        type: "update-lives",
-        name: player.name,
-        lives: player.lives,
-      }));
+      conn.sendUTF(
+        JSON.stringify({
+          type: "update-lives",
+          name: player.name,
+          lives: player.lives,
+        })
+      );
 
       if (player.lives <= 0) {
         player.dead = true;
 
         broadcast({ type: "player-dead", name: player.name }, players);
 
-        conn.sendUTF(JSON.stringify({
-          restart: "restart",
-          message: "You lost!",
-        }));
+        conn.sendUTF(
+          JSON.stringify({
+            restart: "restart",
+            message: "You lost!",
+          })
+        );
       }
     }
   }
 
-  const alivePlayers = [...players.values()].filter(p => !p.dead);
+  const alivePlayers = [...players.values()].filter((p) => !p.dead);
   if (alivePlayers.length <= 1) {
     const winner = alivePlayers[0]?.name || null;
     broadcast({ type: "game-over", winner }, players);
   }
 
   // 🎆 Send explosion event
-  broadcast({
-    type: "bomb-exploded",
-    explosionTiles,
-    map,
-  }, players);
+  broadcast(
+    {
+      type: "bomb-exploded",
+      explosionTiles,
+      map,
+    },
+    players
+  );
 
   // 🧹 Reset explosion tiles after short delay (e.g., 500ms)
   setTimeout(() => {
@@ -112,7 +126,6 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
     }
     broadcast({ type: "explosion-cleared", map }, players);
     // console.log("nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",map);
-    
   }, 500);
 }
 function applyPowerUp(player, stat, max, duration, players) {
@@ -126,11 +139,10 @@ function applyPowerUp(player, stat, max, duration, players) {
   if (player[timeoutKey]) {
     clearTimeout(player[timeoutKey]);
   }
-  
 
   // Schedule stat reset after duration
   player[timeoutKey] = setTimeout(() => {
-    player[stat] = DEFAULT_STATS[stat] ;
+    player[stat] = DEFAULT_STATS[stat];
 
     // Notify client of expired power-up
     broadcast(
@@ -157,4 +169,4 @@ function applyPowerUp(player, stat, max, duration, players) {
   }, duration);
 }
 
-module.exports = { HandleExplosion, applyPowerUp, powerUps, POWER_UP_TYPES};
+module.exports = { HandleExplosion, applyPowerUp, powerUps, POWER_UP_TYPES };
