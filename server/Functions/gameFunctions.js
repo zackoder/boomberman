@@ -126,7 +126,33 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
   setTimeout(() => {
     for (const tile of explosionTiles) {
       if (map[tile.y][tile.x] === 11) {
-        map[tile.y][tile.x] = 0;
+
+        for (let [conn, p] of players) {
+          console.log("player name", p.name);
+
+          if (tile.y === p.y && p.x === tile.x) {
+            console.log("here", p.name);
+            // if (player.)
+
+            map[tile.y][tile.x] = p.id;
+            // console.log("return to 0", p);
+            break;
+          } else {
+            // console.log(p);
+            // map[player.y][player.x] = 0;
+            console.log("here didn't die", p.name);
+            // if (map[tile.y][tile.x] === 11){
+              
+            // }
+            map[tile.y][tile.x] = 0;
+            // break;
+
+            
+            
+          }
+        }
+      } else {
+        console.log("here 2", map[tile.y][tile.x]);
       }
     }
     broadcast({ type: "explosion-cleared", newMap: map }, players);

@@ -87,14 +87,13 @@ ws.on("request", (req) => {
       };
       players.set(connection, player);
       if (map.length === 0) createmap();
-      let tmp = 2;
+      let tmp = 20;
       let interval = null;
       let currentTime = tmp;
       let waiting = 3;
 
       if (players.size == 2) {
         interval = setInterval(() => {
-          console.log(players.size >= 2, interval === null);
           if (players.size === 4 || currentTime <= 0) {
             clearInterval(interval);
             gameStat = true;
@@ -121,16 +120,9 @@ ws.on("request", (req) => {
         }, 1000);
       }
       let beforestart = null;
-      if (players.size < 2) {
-        broadcast({ players: players.size, restart: "restart" }, players);
-        clearInterval(beforestart);
-        return;
-      }
       if (!beforestart) {
         beforestart = setInterval(() => {
-          console.log("test", gameStat);
           if (gameStat) {
-            console.log("conting donw befor the game start", waiting);
             if (players.size < 2) {
               broadcast({ players: players.size, restart: "restart" }, players);
               clearInterval(beforestart);
@@ -198,7 +190,7 @@ ws.on("request", (req) => {
         }
 
         if (currentcell >= 3 && currentcell <= 6) {
-          console.log("return to 0", player);
+          // console.log("return to 0", player);
           for (const p of players.values()) {
             if (p.y === player.y && player.x === p.x && p.id !== player.id) {
               map[player.y][player.x] = p.id;
@@ -274,7 +266,7 @@ ws.on("request", (req) => {
       if (bombs.some((b) => b.x === x && b.y === y)) return;
 
       bombs.push({ x, y, owner: name });
-      
+
       player.activeBombs++;
 
       // notify clients that the bomb is placed by a player !!!!!!!

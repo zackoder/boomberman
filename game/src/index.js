@@ -28,8 +28,8 @@ const ManageError = new useState("")
 
 export function homePage() {
   localPlayer = ManegLocalPlayer.getStat()
-  console.log(localPlayer,"fghfytfty");
-  
+  console.log(localPlayer, "fghfytfty");
+
   handlemsgs();
   const currentTime = ManageTimer.getStat()
   console.log(currentTime);
@@ -77,7 +77,7 @@ export function homePage() {
   );
 
   const container = jsx("div", { class: "container-chat" }, chatSection, ...messages);
-  const err0 = jsx ("div",{class : "err"},ManageError.getStat());
+  const err0 = jsx("div", { class: "err" }, ManageError.getStat());
 
   const form = jsx(
     "form",
@@ -117,7 +117,6 @@ export function homePage() {
       playersCounter,
       pinfo ? pinfo : "",
       timerContainer,
-      playersCounter,
       err0
     ),
     localPlayer.name ? container : ""
@@ -202,25 +201,22 @@ function handlemsgs() {
       //   });
       //   root.prepend(error);
       // }
-      if (!err) {
-        const err = jsx(
-          "div",
-          { class: "error" },
-          "the others left before the game start"
-        );
-        render(root, err);
-      }
+      // if (!err) {
+      //   const err = jsx(
+      //     "div",
+      //     { class: "error" },
+      //     "the others left before the game start"
+      //   );
+      //   render(root, err);
+      // }
     }
-    if (data.error){
-      console.log("errrrrrrrrrrrrrrrrrrrrrrr");
-      
+    if (data.error) {
       ManageError.setState(data.error);
     }
     if (data.name) {
       ManegLocalPlayer.setState({ name: data.name });
       localPlayer.name = data.name;
       ManageError.setState("");
-
     }
     if (data.time) {
       ManageTimer.setState(data.time);
@@ -228,21 +224,13 @@ function handlemsgs() {
 
 
     if (data.players) {
-      // console.log(data)
+      localPlayer = ManegLocalPlayer.getStat()
       ManegLocalPlayer.setState({
         ...localPlayer,
         playersCounter: data.players,
       });
-
-      // console.log(ManegLocalPlayer.getStat())
-      // document.querySelector(
-      //   ".playersCounter"
-      // ).textContent = `${data.info} ${data.players}`;
-      // playersCounter.textContent = playersCounter
-      //   ? `${data.info} ${data.players}`
-      //   : "";
     }
-    // Handle initial map and player info
+
     if (data.type === "init") {
       game = new Game(data.map, data.players);
       players = data.palayers;
@@ -284,12 +272,12 @@ function handlemsgs() {
       // drawBomb(data.x, data.y);
     }
     if (data.type === "bomb-exploded") {
-    
+
       ManegAllPlayers.setState(data.palayers);
 
     }
     if (data.type === "player-dead") {
-       ManegAllPlayers.setState(data.palayers);
+      ManegAllPlayers.setState(data.palayers);
     }
     // if (data.type === "powerup-appeared") {
     //   placePowerUp(data.x, data.y, data.powerUp);
