@@ -2,6 +2,7 @@ const {
   HandleExplosion,
   applyPowerUp,
   powerUps,
+  POWER_UP_TYPES,
 } = require("./Functions/gameFunctions");
 const { broadcast } = require("./Functions/helperFunctions");
 
@@ -21,14 +22,11 @@ const START_POSITIONS = [
   { x: 1, y: MAX_ROWS - 2 },
   { x: MAX_ROWS - 2, y: MAX_ROWS - 2 },
 ];
-const MAX_FIREPOWER = 2;
-const MAX_BOMBS = 3;
-const MAX_SPEED = 2;
+const MAX_POWERUP = 3;
+
+// const MAX_SPEED = 2;
 const POWER_UP_DURATION = 30000;
-const info = [
-  "wait for other players to join",
-  "you will start after a few secends",
-];
+
 let gameStat = false;
 
 const players = new Map();
@@ -69,6 +67,7 @@ ws.on("request", (req) => {
         }
       }
       const startIndex = players.size;
+      const playerId = players.size + 3;
       if (startIndex >= START_POSITIONS.length) {
         return connection.sendUTF(JSON.stringify({ error: "Room is full" }));
       }
@@ -78,6 +77,7 @@ ws.on("request", (req) => {
         name: data.name,
         x: position.x,
         y: position.y,
+        id: playerId,
         lives: 3,
         maxBombs: 1,
         activeBombs: 0,
@@ -87,10 +87,10 @@ ws.on("request", (req) => {
       };
       players.set(connection, player);
       if (map.length === 0) createmap();
-      let tmp = 20
+      let tmp = 2;
       let interval = null;
       let currentTime = tmp;
-      let waiting = 10;
+      let waiting = 3;
 
       if (players.size == 2) {
         interval = setInterval(() => {
@@ -100,14 +100,18 @@ ws.on("request", (req) => {
             gameStat = true;
             currentTime = tmp;
             broadcast(
-              { type: "init", map, players: [...players.values()] },
+              {
+                type: "init",
+                map: generateMapSnapshot(),
+                players: [...players.values()],
+              },
               players
             );
-            return
+            return;
           }
           if (players.size < 2) {
             clearInterval(interval);
-            clearInterval(beforestart)
+            clearInterval(beforestart);
             currentTime = tmp;
             broadcast({ time: currentTime }, players);
             return;
@@ -117,6 +121,11 @@ ws.on("request", (req) => {
         }, 1000);
       }
       let beforestart = null;
+      if (players.size < 2) {
+        broadcast({ players: players.size, restart: "restart" }, players);
+        clearInterval(beforestart);
+        return;
+      }
       if (!beforestart) {
         beforestart = setInterval(() => {
           console.log("test", gameStat);
@@ -143,7 +152,6 @@ ws.on("request", (req) => {
         {
           name: data.name,
           players: players.size,
-          info: info[players.size < 2 ? 0 : 1],
         },
         players
       );
@@ -151,12 +159,14 @@ ws.on("request", (req) => {
 
     // Send initial map and player info
     if (data.type === "move") {
+      // handlePlayerMovment()
       if (!players.has(connection)) {
         return connection.sendUTF(
           JSON.stringify({ error: "Unregistered player" })
         );
       }
       const player = players.get(connection);
+
       if (!player || player.dead) return;
 
       const { dir } = data;
@@ -173,18 +183,41 @@ ws.on("request", (req) => {
       const { dx, dy } = direction;
       const newX = player.x + dx;
       const newY = player.y + dy;
+      const newPosicell = map[newY]?.[newX];
+      const currentcell = map[player.y][player.x];
 
-      if (map[newY]?.[newX] === 0) {
+      if (newPosicell !== 1 && newPosicell !== 2 && newPosicell !== 10) {
+        if (newPosicell >= 7 || newPosicell <= 9) {
+          applyPowerUp(
+            player,
+            POWER_UP_TYPES[newPosicell - 6],
+            MAX_POWERUP,
+            POWER_UP_DURATION,
+            players
+          );
+        }
+        
+        if (currentcell >= 3 && currentcell <= 6) {
+          for (const p of players.values()) {
+            if (p.y === player.y && player.x === p.x && p.id !== player.id) {
+              map[player.y][player.x] = p.id;
+              console.log("return to 0", p);
+              break;
+            } else if (p.id !== player.id) {
+              console.log(p);
+              map[player.y][player.x] = 0;
+              break;
+            }
+          }
+        }
+        map[newY][newX] = player.id;
         player.x = newX;
         player.y = newY;
 
         broadcast(
           {
             type: "player-move",
-            name: player.name,
-            x: newX,
-            y: newY,
-            players,
+            newMap: map,
           },
           players
         );
@@ -193,43 +226,41 @@ ws.on("request", (req) => {
         (p) => p.x === player.x && p.y === player.y
       );
       if (powerUpIndex !== -1) {
-        const powerUp = powerUps.splice(powerUpIndex, 1)[0];
-
-        if (powerUp.type === "firepower") {
-          applyPowerUp(
-            player,
-            "firepower",
-            MAX_FIREPOWER,
-            POWER_UP_DURATION,
-            players
-          );
-        } else if (powerUp.type === "bomb") {
-          applyPowerUp(
-            player,
-            "maxBombs",
-            MAX_BOMBS,
-            POWER_UP_DURATION,
-            players
-          );
-        } else if (powerUp.type === "speed") {
-          applyPowerUp(player, "speed", null, POWER_UP_DURATION, players);
-        }
-
-        broadcast(
-          {
-            type: "power-up-collected",
-            name: player.name,
-            x: player.x,
-            y: player.y,
-            powerUp: powerUp.type,
-            newStats: {
-              firepower: player.firepower,
-              maxBombs: player.maxBombs,
-              speed: player.speed,
-            },
-          },
-          players
-        );
+        // const powerUp = powerUps.splice(powerUpIndex, 1)[0];
+        // if (powerUp.type === "firepower") {
+        //   applyPowerUp(
+        //     player,
+        //     "firepower",
+        //     MAX_FIREPOWER,
+        //     POWER_UP_DURATION,
+        //     players
+        //   );
+        // } else if (powerUp.type === "bomb") {
+        //   applyPowerUp(
+        //     player,
+        //     "maxBombs",
+        //     MAX_BOMBS,
+        //     POWER_UP_DURATION,
+        //     players
+        //   );
+        // } else if (powerUp.type === "speed") {
+        //   applyPowerUp(player, "speed", null, POWER_UP_DURATION, players);
+        // }
+        // broadcast(
+        //   {
+        //     type: "power-up-collected",
+        //     name: player.name,
+        //     x: player.x,
+        //     y: player.y,
+        //     powerUp: powerUp.type,
+        //     newStats: {
+        //       firepower: player.firepower,
+        //       maxBombs: player.maxBombs,
+        //       speed: player.speed,
+        //     },
+        //   },
+        //   players
+        // );
       }
     }
     if (data.type === "drop-bomb") {
@@ -248,14 +279,15 @@ ws.on("request", (req) => {
       broadcast(
         {
           type: "bomb-placed",
-          x,
-          y,
+          newMap: map,
         },
         players
       );
 
       // set a timeout to the explosion
+      map[y][x] = 10;
       setTimeout(() => {
+        map[y][x] = 0;
         HandleExplosion(map, x, y, name, players, bombs);
         player.activeBombs--;
       }, 1200);
@@ -337,3 +369,12 @@ function createmap() {
 server.listen(3001, () => {
   console.log("Server running at http://0.0.0.0:3000");
 });
+function generateMapSnapshot() {
+  const snapshot = map.map((row) => [...row]);
+  for (const player of players.values()) {
+    snapshot[player.y][player.x] = player.id;
+    map[player.y][player.x] = player.id;
+  }
+
+  return snapshot;
+}

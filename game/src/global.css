@@ -91,7 +91,7 @@ body {
 }
 
 .gameInfo .form-nickname .input,
-.chatForm input  {
+.chatForm input {
   width: 60%;
   padding: 5px 8px;
   border-radius: 5px;
@@ -125,7 +125,8 @@ body {
   font-size: 20px;
 }
 
-.chatForm input {}
+.chatForm input {
+}
 
 .chatForm input {
   width: calc(100% - 20px);
@@ -163,77 +164,61 @@ body {
 }
 
 .bomb {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  background-color: black;
-  border-radius: 50%;
-  animation: blink 0.5s infinite alternate;
+  font-size: 20px;
+  text-align: center;
+  animation: pulse 1s infinite ease-in-out;
 }
 
-@keyframes blink {
-  from {
+@keyframes pulse {
+  0% {
+    transform: scale(1);
     opacity: 1;
   }
-
-  to {
-    opacity: 0.3;
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
   }
 }
 
 .explosion {
-  width: 100%;
-  height: 100%;
   background-color: orange;
-  opacity: 0.9;
-  animation: flicker 0.3s infinite;
+  animation: flash 0.5s infinite ease-in-out;
 }
 
-@keyframes flicker {
+@keyframes flash {
   0% {
-    background-color: red;
+    opacity: 0.3;
   }
-
   50% {
-    background-color: orange;
+    opacity: 1;
   }
-
   100% {
-    background-color: yellow;
+    opacity: 0.3;
   }
 }
 
 /* /////////////////////////////////////////////////// */
 
 .powerup {
-  width: 80%;
-  height: 80%;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 0.8rem;
-  animation: pulse 1s infinite;
+  font-size: 18px;
+  text-align: center;
+  line-height: 1;
 }
 
-/* Specific Power-up Types */
+.powerup.firepower {
+  color: red;
+}
 .powerup.bomb {
-  background-color: #444;
-  background-color: #e25822;
-  border: 2px solid #fff;
+  color: black;
 }
-
-.powerup.fire {
-  background-color: #e25822;
-  border: 2px solid #fff;
+.powerup.speed {
+  color: green;
 }
-
-.powerup.random {
-  background-color: #673ab7;
-  border: 2px solid #fff;
-}
+/* Specific Power-up Types */
 
 /* Pulse Animation for Visibility */
 @keyframes pulse {

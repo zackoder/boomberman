@@ -1,13 +1,12 @@
 import { Router } from "./core/router.js";
 import { Game } from "./game.js";
-import { EventListener } from "./core/events.js";
 import { throttle } from "./functions/helperfunctions.js";
 import { jsx, root } from "./core/dom.js";
 import { render } from "./core/render.js";
 import { useState } from "./core/state.js";
 
 let moveDelay = 200;
-const MAX_ROWS = 15;
+// const MAX_ROWS = 15;
 export const rout = new Router();
 let socket = null;
 let localPlayer = {};
@@ -48,13 +47,13 @@ export function homePage() {
   // create input
   const input = jsx("input", {
     id: "nameInpt",
-    class: "input"
+    class: "input",
   });
 
   // create form with label and input as children
-  let currentdata
-  const prevMessages = Managemessages.getStat()
-  const messages = prevMessages.map(msg => {
+  let currentdata;
+  const prevMessages = Managemessages.getStat();
+  const messages = prevMessages.map((msg) => {
     return jsx(
       "p",
       {
@@ -62,7 +61,6 @@ export function homePage() {
       },
       jsx("span", {}, `from ${msg.sender} : `),
       jsx("span", {}, `${msg.message}`)
-
     );
   })
   console.log(prevMessages);
@@ -96,33 +94,42 @@ export function homePage() {
   //   form
   // );
   // console.log(ManegLocalPlayer.getStat());
-  if (localPlayer.name) currentdata = container
-
-  else currentdata = form
+  if (localPlayer.name) currentdata = container;
+  else currentdata = form;
   // console.log("local player name", localPlayer.name);
 
-
-  const playersCounter = jsx("span", { class: "playersCounter" }, "the number of players : " + (ManegLocalPlayer.getStat().playersCounter || 0));
+  const info = [
+    "wait for other players to join",
+    "you will start after the counter ends",
+  ];
+  const playersCounternbr = ManegLocalPlayer.getStat().playersCounter
+  const playersCounter = jsx("p", { class: "playersCounter" }, "the current number of player(s) is; " + (playersCounternbr ? playersCounternbr : 0));
+  let pinfo
+  if (playersCounternbr) {
+    pinfo = jsx("p", {}, info[playersCounternbr > 1 ? 1 : 0]);
+  }
   return jsx("div", { class: "home-page", },
     jsx("div",
       {
         class: "gameInfo",
       },
       localPlayer.name ? "" : form,
+      playersCounter,
+      pinfo ? pinfo : "",
       timerContainer,
       playersCounter,
       err0
     ),
-    localPlayer.name ? container : "",
+    localPlayer.name ? container : ""
   );
   // return game;
 }
 
 function chatHandler(e) {
   e.preventDefault();
-  const input = e.target.children[0]
+  const input = e.target.children[0];
   socket.send(JSON.stringify({ message: input.value }));
-  input.value = ""
+  input.value = "";
 }
 
 let alreadyStarted = false;
@@ -149,54 +156,38 @@ function handleMove(e) {
 function createConnection() {
   if (socket !== null) return;
   //this should be updated if needed when needed depending on which machine we're working with
-  socket = new WebSocket("ws://0.0.0.0:3001");
+  socket = new WebSocket("ws://localhost:3001");
 }
+const ManageMap = new useState([]);
 
 function handlemsgs() {
-  localPlayer = ManegLocalPlayer.getStat()
+  localPlayer = ManegLocalPlayer.getStat();
   socket.onmessage = (e) => {
     const data = JSON.parse(e.data);
 
     if (!data) return;
-    console.log("__________________________----------------", data);
+    if (data.newMap) {
+      game.setNewMap(data.newMap);
+      ManageMap.setState(data.newMap)
+    }
     if (data.message) {
-      const prevMessages = Managemessages.getStat()
-      Managemessages.setState([data, ...prevMessages])
+      const prevMessages = Managemessages.getStat();
+      Managemessages.setState([data, ...prevMessages]);
     }
     if (data.gameStarted) {
       if (alreadyStarted) return;
+      // requestAnimationFrame(() => {
+      // ManageMap.getStat();
+      // console.log("hi");
       rout.navigate("/game");
+      // });
+      // rout.navigate("/game");
+      // requestAnimationFrame(game.drawMap(allPlayers));
 
       alreadyStarted = true;
       console.log("started");
-      // const throttledMove = throttle((e) => {
-      //   const keyMap = {
-      //     ArrowUp: "up",
-      //     ArrowDown: "down",
-      //     ArrowLeft: "left",
-      //     ArrowRight: "right",
-      //   };
-      //   if (keyMap[e.key] && socket?.readyState === WebSocket.OPEN) {
-      //     socket.send(
-      //       JSON.stringify({
-      //         type: "move",
-      //         dir: keyMap[e.key],
-      //       })
-      //     );
-      //   }
-      // }, moveDelay);
       moveDelay = allPlayers[ManegLocalPlayer.getStat().name]?.speed || 200;
       throttledMove = throttle(handleMove, moveDelay);
-      // EventListener("document", "keydown", (e) => {
-      // jsx("document", {
-      //   onkeydown: (e) => {players
-      //     if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
-      //       socket.send(JSON.stringify({ type: "drop-bomb" }));
-      //     }
-      //     e.preventDefault();
-      //     throttledMove(e);
-      //   },
-      // });
     }
     if (data.restart) {
       setTimeout(() => {
@@ -236,10 +227,12 @@ function handlemsgs() {
     }
 
 
-
     if (data.players) {
       // console.log(data)
-      ManegLocalPlayer.setState({ ...localPlayer, playersCounter: data.players })
+      ManegLocalPlayer.setState({
+        ...localPlayer,
+        playersCounter: data.players,
+      });
 
       // console.log(ManegLocalPlayer.getStat())
       // document.querySelector(
@@ -253,12 +246,14 @@ function handlemsgs() {
     if (data.type === "init") {
       game = new Game(data.map, data.players);
       players = data.palayers;
+      console.log(players);
+
       for (let player of data.players) {
         allPlayers[player.name] = { ...player };
       }
-      ManegAllPlayers.setState(allPlayers)
-
-      game.drawMap(allPlayers);
+      ManegAllPlayers.setState(allPlayers);
+      //  requestAnimationFrame(game.drawMap(allPlayers))
+      ManageMap.setState(data.map)
       // for (let [key, value] of Object.entries(allPlayers)) {
       //   console.log(key, value);
       //   renderPlayer(value);
@@ -269,9 +264,8 @@ function handlemsgs() {
       // console.log(form);
     }
     if (data.type === "player-move") {
-      console.log(data);
 
-      ManegAllPlayers.setState(data.palayers)
+      ManegAllPlayers.setState(data.palayers);
       // ManegLocalPlayer.setState()
       // if (!allPlayers[data.name]) return;
       // allPlayers[data.name].x = data.x;
@@ -283,64 +277,61 @@ function handlemsgs() {
       // }
     }
     if (data.type === "player-leave") {
-      document
-        .querySelectorAll(`.player-${data.name}`)
-        .forEach((el) => el.classList.remove("player"));
-      delete allPlayers[data.name];
+      ManegAllPlayers.setState(data.palayers);
     }
     if (data.type === "bomb-placed") {
-      drawBomb(data.x, data.y);
+      ManegAllPlayers.setState(data.palayers);
+      // drawBomb(data.x, data.y);
     }
     if (data.type === "bomb-exploded") {
-      animateExplosion(data.explosionTiles);
-      removeBomb(data.x, data.y);
+    
+      ManegAllPlayers.setState(data.palayers);
+
     }
     if (data.type === "player-dead") {
-      document
-        .querySelectorAll(`.player-${data.name}`)
-        .forEach((el) => el.remove());
-      delete allPlayers[data.name];
+       ManegAllPlayers.setState(data.palayers);
     }
-    if (data.type === "powerup-appeared") {
-      placePowerUp(data.x, data.y, data.powerUp);
-    }
+    // if (data.type === "powerup-appeared") {
+    //   placePowerUp(data.x, data.y, data.powerUp);
+    // }
     // this whole section should be updated there should be no queryselectors
     // ## khdaam 3la raseek a si waliiiid
 
-    if (data.type === "update-lives" && data.name === localPlayer.name) {
-      document.querySelector("#hud-lives").textContent = data.lives;
-    }
+    // if (data.type === "update-lives" && data.name === localPlayer.name) {
+    //   document.querySelector("#hud-lives").textContent = data.lives;
+    // }
     if (data.type === "power-up-collected") {
-      removePowerUp(data.x, data.y);
-      if (data.name === localPlayer.name) {
-        document.querySelector("#hud-fire").textContent =
-          data.newStats.firepower;
-        document.querySelector("#hud-bombs").textContent =
-          data.newStats.maxBombs;
-        document.querySelector("#hud-speed").textContent = `x${200 / data.newStats.speed
-          }`;
-      }
+      ManegAllPlayers.setState(data.palayers);
+      // removePowerUp(data.x, data.y);
+      // if (data.name === localPlayer.name) {
+      //   document.querySelector("#hud-fire").textContent =
+      //     data.newStats.firepower;
+      //   document.querySelector("#hud-bombs").textContent =
+      //     data.newStats.maxBombs;
+      //   document.querySelector("#hud-speed").textContent = `x${200 / data.newStats.speed
+      //     }`;
+      // }
     }
-    if (data.type === "power-up-expired") {
-      if (data.name === localPlayer.name) {
-        if (data.stat === "firepower") {
-          document.querySelector("#hud-fire").textContent = data.value;
-          localPlayer.firepower = data.value;
-        } else if (data.stat === "maxBombs") {
-          document.querySelector("#hud-bombs").textContent = data.value;
-          localPlayer.maxBombs = data.value;
-        } else if (data.stat === "speed") {
-          document.querySelector("#hud-speed").textContent = "1";
-          localPlayer.speed = data.value;
-        }
-      }
-    }
-    if (data.type === "update-speed" && data.name === localPlayer.name) {
-      moveDelay = data.speed;
-      localPlayer.speed = data.speed;
-      document.querySelector("#hud-speed").textContent = `x${200 / moveDelay}`;
-      throttledMove = throttle(handleMove, moveDelay);
-    }
+    // if (data.type === "power-up-expired") {
+    //   if (data.name === localPlayer.name) {
+    //     if (data.stat === "firepower") {
+    //       document.querySelector("#hud-fire").textContent = data.value;
+    //       localPlayer.firepower = data.value;
+    //     } else if (data.stat === "maxBombs") {
+    //       document.querySelector("#hud-bombs").textContent = data.value;
+    //       localPlayer.maxBombs = data.value;
+    //     } else if (data.stat === "speed") {
+    //       document.querySelector("#hud-speed").textContent = "1";
+    //       localPlayer.speed = data.value;
+    //     }
+    //   }
+    // }
+    // if (data.type === "update-speed" && data.name === localPlayer.name) {
+    //   moveDelay = data.speed;
+    //   localPlayer.speed = data.speed;
+    //   document.querySelector("#hud-speed").textContent = `x${200 / moveDelay}`;
+    //   throttledMove = throttle(handleMove, moveDelay);
+    // }
 
     if (data.type === "game-over") {
       gameOver(data.winner);
@@ -350,18 +341,22 @@ function handlemsgs() {
 createConnection();
 rout.handleRouteChange();
 export function gamehandler() {
-
+  // startanimating();
   if (game === null || players === null) return rout.navigate("/");
-  console.log("test");
+  // console.log("test");
 
   const lives = jsx("p", {}, "❤️ Lives:", jsx("span", { id: "hud-lives" }, 3));
-  const firepower = jsx("p", {}, "🔥 Firepower:", jsx("span", { id: "hud-fire" }, 1));
+  const firepower = jsx(
+    "p",
+    {},
+    "🔥 Firepower:",
+    jsx("span", { id: "hud-fire" }, 1)
+  );
   const Bombs = jsx("p", {}, "💣 Bombs: ", jsx("span", { id: "hud-bombs" }, 1));
   const Speed = jsx("p", {}, "👠 Speed: ", jsx("span", { id: "hud-speed" }, 1));
-  const hud = jsx("div", { class: "hud" }, lives, firepower, Bombs, Speed)
+  const hud = jsx("div", { class: "hud" }, lives, firepower, Bombs, Speed);
 
-  const map = game.drawMap(players)
-
+  const map = game.drawMap(ManageMap.getStat())
 
   const gamee = jsx("div", {
     tabIndex: 0,
@@ -372,55 +367,80 @@ export function gamehandler() {
       if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ type: "drop-bomb" }));
       }
-
       throttledMove(e);
-    }
-  }, hud, map)
+    },
+  },
+    hud,
+    map
+  );
 
-  return gamee
+  return gamee;
 }
+
+
+function gameLoop() {
+  if (game && allPlayers) game.drawMap()
+  requestAnimationFrame(gameLoop)
+}
+
+gameLoop()
+
+// function test() {
+//   console.log("hello");
+//   requestAnimationFrame(test);
+// }
+// test();
+// requestAnimationFrame(test);
+// function startanimating() {
+//   rout.navigate("/game");
+//   // game.drawMap();
+// }
+
+// function drawmap() {
+// }
 // power-UPS section
-function placePowerUp(x, y, kind) {
-  const index = y * MAX_ROWS + x;
-  const cell = document.querySelectorAll(".gameContainer > div")[index];
+// function placePowerUp(x, y, kind) {
+//   const index = y * MAX_ROWS + x;
+//   const cell = document.querySelectorAll(".gameContainer > div")[index];
 
-  if (cell) {
-    // Remove existing powerup first ,if there is any
-    const existing = cell.querySelector(".powerup");
-    if (existing) existing.remove();
+//   if (cell) {
+//     // Remove existing powerup first ,if there is any
+//     const existing = cell.querySelector(".powerup");
+//     if (existing) existing.remove();
 
-    // Create power-up
-    const powerup = jsx("div", { class: `powerup ${kind}` });
-    powerup.textContent = getPowerupSymbol(kind);
-    cell.appendChild(powerup);
-  }
-}
+//     // Create power-up
+//     const powerup = jsx("div", { class: `powerup ${kind}` });
+//     powerup.textContent = getPowerupSymbol(kind);
+//     cell.appendChild(powerup);
+//   }
+// }
 
-function getPowerupSymbol(kind) {
-  switch (kind) {
-    case "bomb":
-      return "B";
-    case "firepower":
-      return "F";
-    case "speed":
-      return "S";
-    case "random":
-      return "?";
-    default:
-      return "";
-  }
-}
-function checkForPowerUp(playerX, playerY) {
-  const index = playerY * MAX_ROWS + playerX;
-  const cell = document.querySelectorAll(".gameContainer > div")[index];
-  const powerup = cell.querySelector(".powerup");
-  if (powerup) {
-    const kind = [...powerup.classList].find((cls) => cls !== "powerup");
-    powerup.remove();
+// function getPowerupSymbol(kind) {
+//   switch (kind) {
+//     case "bomb":
+//       return "B";
+//     case "firepower":
+//       return "F";
+//     case "speed":
+//       return "S";
+//     case "random":
+//       return "?";
+//     default:
+//       return "";
+//   }
+// }
 
-    console.log("Power-up collected:", kind);
-  }
-}
+// function checkForPowerUp(playerX, playerY) {
+//   const index = playerY * MAX_ROWS + playerX;
+//   const cell = document.querySelectorAll(".gameContainer > div")[index];
+//   const powerup = cell.querySelector(".powerup");
+//   if (powerup) {
+//     const kind = [...powerup.classList].find((cls) => cls !== "powerup");
+//     powerup.remove();
+
+//     console.log("Power-up collected:", kind);
+//   }
+// }
 
 // function renderPlayer(player) {
 //   console.log("Playererrrrrrrr", player);
@@ -452,59 +472,59 @@ function checkForPowerUp(playerX, playerY) {
 function submitName(e) {
   e.preventDefault();
 
-  const nameInput = e.target.children[1]
+  const nameInput = e.target.children[1];
   // if (nameInput)
   // console.log(ipt);
   if (!nameInput) return;
   const name = nameInput.value.trim();
-  nameInput.value = ""
+  nameInput.value = "";
   if (!name) return;
   socket.send(JSON.stringify({ type: "name", name }));
 }
 
-function animateExplosion(explosionTiles) {
-  for (const tile of explosionTiles) {
-    const index = tile.y * MAX_ROWS + tile.x;
-    const cell = document.querySelectorAll(".gameContainer > div")[index];
-    if (cell) {
-      if (!cell.classList.contains("wall")) {
-        const explosion = jsx("div", { class: "explosion" });
-        cell.appendChild(explosion);
-        setTimeout(() => explosion.remove(), 500);
-      }
+// function animateExplosion(explosionTiles) {
+//   for (const tile of explosionTiles) {
+//     const index = tile.y * MAX_ROWS + tile.x;
+//     const cell = document.querySelectorAll(".gameContainer > div")[index];
+//     if (cell) {
+//       if (!cell.classList.contains("wall")) {
+//         const explosion = jsx("div", { class: "explosion" });
+//         cell.appendChild(explosion);
+//         setTimeout(() => explosion.remove(), 500);
+//       }
 
-      if (cell.classList.contains("softwall")) {
-        cell.classList.remove("softwall");
-        cell.classList.add("emptysell");
-      }
-    }
-  }
-}
+//       if (cell.classList.contains("softwall")) {
+//         cell.classList.remove("softwall");
+//         cell.classList.add("emptysell");
+//       }
+//     }
+//   }
+// }
 
-function drawBomb(x, y) {
-  const index = y * MAX_ROWS + x;
-  const cell = document.querySelectorAll(".gameContainer > div")[index];
-  if (!cell) return;
-  const bomb = jsx("div", { class: "bomb" });
-  cell.appendChild(bomb);
-}
+// function drawBomb(x, y) {
+//   const index = y * MAX_ROWS + x;
+//   const cell = document.querySelectorAll(".gameContainer > div")[index];
+//   if (!cell) return;
+//   const bomb = jsx("div", { class: "bomb" });
+//   cell.appendChild(bomb);
+// }
 
-function removeBomb(x, y) {
-  const index = y * MAX_ROWS + x;
-  const cell = document.querySelectorAll(".gameContainer > div")[index];
-  if (!cell) return;
-  const bomb = cell.querySelector(".bomb");
-  if (bomb) bomb.remove();
-}
+// function removeBomb(x, y) {
+//   const index = y * MAX_ROWS + x;
+//   const cell = document.querySelectorAll(".gameContainer > div")[index];
+//   if (!cell) return;
+//   const bomb = cell.querySelector(".bomb");
+//   if (bomb) bomb.remove();
+// }
 
-function removePowerUp(x, y) {
-  const index = y * MAX_ROWS + x;
-  const cell = document.querySelectorAll(".gameContainer > div")[index];
-  if (cell) {
-    const powerup = cell.querySelector(".powerup");
-    if (powerup) powerup.remove();
-  }
-}
+// function removePowerUp(x, y) {
+//   const index = y * MAX_ROWS + x;
+//   const cell = document.querySelectorAll(".gameContainer > div")[index];
+//   if (cell) {
+//     const powerup = cell.querySelector(".powerup");
+//     if (powerup) powerup.remove();
+//   }
+// }
 
 function gameOver(winnerName = "Unknown") {
   alreadyStarted = false;
