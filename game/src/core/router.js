@@ -18,11 +18,14 @@ export class Router {
     const path = window.location.pathname;
 
     if (this.routers[path]) {
+
       const Vdom = this.routers[path]();
+      console.log(currentVdom === Vdom);
+      
       UpdateDOM(root.children[0], currentVdom, Vdom);
       updateVdom(Vdom);
     } else {
-      this.navigate("/notfound");
+      // this.navigate("/notfound");
     }
 
     this.currentPath = path;

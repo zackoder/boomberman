@@ -15,34 +15,6 @@ export class useState {
   }
 }
 
-// let hookStates = [];
-// let hookIndex = 0;
-
-// export function resetStateIndex() {
-//   hookIndex = 0
-// }
-
-// export function useState(initialValue) {
-//   const currentIndex = hookIndex;
-
-//   // Initialize the state if it's the first time this hook is run
-//   hookStates[currentIndex] = hookStates[currentIndex] || initialValue;
-
-//   // Update hook index for the next hook call
-//   hookIndex++;
-
-//   // Function to update state and re-render
-//   const setState = (newValue) => {
-//     console.log(hookStates);
-
-//     hookStates[currentIndex] = typeof newValue === 'function'
-//       ? newValue(hookStates[currentIndex])
-//       : newValue;
-//     render(); // Re-render the component
-//   };
-
-//   return [hookStates[currentIndex], setState];
-// }
 
 export function jsx(tag, props, ...children) {
   if (typeof tag === "function") {
@@ -57,19 +29,47 @@ export function jsx(tag, props, ...children) {
 // // let effectIndex = null;
 // let effectIndex = 0;
 // export function useEffect(callback, dependencies) {
-//   const oldDependencies = effects[effectIndex];
-//   let hasChanged = true;
-
-//   if (oldDependencies) {
-//     hasChanged = dependencies.some(
-//       (dep, i) => !Object.is(dep, oldDependencies[i])
-//     );
-//   }
-
-//   if (hasChanged) {
-//     callback();
-//   }
-//   effects[effectIndex] = dependencies;
-//   // effectIndex = effectIndex ? 0 : effectIndex++;
-//   effectIndex++;
-// }
+  //   const oldDependencies = effects[effectIndex];
+  //   let hasChanged = true;
+  
+  //   if (oldDependencies) {
+    //     hasChanged = dependencies.some(
+      //       (dep, i) => !Object.is(dep, oldDependencies[i])
+      //     );
+      //   }
+      
+      //   if (hasChanged) {
+        //     callback();
+        //   }
+        //   effects[effectIndex] = dependencies;
+        //   // effectIndex = effectIndex ? 0 : effectIndex++;
+        //   effectIndex++;
+        // }
+        // let hookStates = [];
+        // let hookIndex = 0;
+        
+        // export function resetStateIndex() {
+        //   hookIndex = 0
+        // }
+        
+        // export function useState(initialValue) {
+        //   const currentIndex = hookIndex;
+        
+        //   // Initialize the state if it's the first time this hook is run
+        //   hookStates[currentIndex] = hookStates[currentIndex] || initialValue;
+        
+        //   // Update hook index for the next hook call
+        //   hookIndex++;
+        
+        //   // Function to update state and re-render
+        //   const setState = (newValue) => {
+        //     console.log(hookStates);
+        
+        //     hookStates[currentIndex] = typeof newValue === 'function'
+        //       ? newValue(hookStates[currentIndex])
+        //       : newValue;
+        //     render(); // Re-render the component
+        //   };
+        
+        //   return [hookStates[currentIndex], setState];
+        // }

@@ -23,7 +23,7 @@ const START_POSITIONS = [
 ];
 const MAX_FIREPOWER = 2;
 const MAX_BOMBS = 3;
-const MAX_SPEED = 2;
+// const MAX_SPEED = 2;
 const POWER_UP_DURATION = 30000;
 
 let gameStat = false;
@@ -66,6 +66,7 @@ ws.on("request", (req) => {
         }
       }
       const startIndex = players.size;
+      const playerId = players.size + 3;
       if (startIndex >= START_POSITIONS.length) {
         return connection.sendUTF(JSON.stringify({ error: "Room is full" }));
       }
@@ -75,6 +76,7 @@ ws.on("request", (req) => {
         name: data.name,
         x: position.x,
         y: position.y,
+        id: playerId,
         lives: 3,
         maxBombs: 1,
         activeBombs: 0,
@@ -84,10 +86,10 @@ ws.on("request", (req) => {
       };
       players.set(connection, player);
       if (map.length === 0) createmap();
-      let tmp = 20
+      let tmp = 2
       let interval = null;
       let currentTime = tmp;
-      let waiting = 10;
+      let waiting = 3;
 
       if (players.size == 2) {
         interval = setInterval(() => {
@@ -97,14 +99,18 @@ ws.on("request", (req) => {
             gameStat = true;
             currentTime = tmp;
             broadcast(
-              { type: "init", map, players: [...players.values()] },
+              {
+                type: "init",
+                map: generateMapSnapshot(),
+                players: [...players.values()],
+              },
               players
             );
-            return
+            return;
           }
           if (players.size < 2) {
             clearInterval(interval);
-            clearInterval(beforestart)
+            clearInterval(beforestart);
             currentTime = tmp;
             broadcast({ time: currentTime }, players);
             return;
@@ -147,7 +153,86 @@ ws.on("request", (req) => {
 
     // Send initial map and player info
     if (data.type === "move") {
-      handlePlayerMovment()
+      // handlePlayerMovment()
+      if (!players.has(connection)) {
+        return connection.sendUTF(
+          JSON.stringify({ error: "Unregistered player" })
+        );
+      }
+      const player = players.get(connection);
+      if (!player || player.dead) return;
+
+      const { dir } = data;
+      const dirs = {
+        up: { dx: 0, dy: -1 },
+        down: { dx: 0, dy: 1 },
+        left: { dx: -1, dy: 0 },
+        right: { dx: 1, dy: 0 },
+      };
+
+      const direction = dirs[dir];
+      if (!direction) return;
+
+      const { dx, dy } = direction;
+      const newX = player.x + dx;
+      const newY = player.y + dy;
+
+      if (map[newY]?.[newX] === 0) {
+        map[player.y][player.x] = 0;
+        map[newY][newX] = player.id;
+        player.x = newX;
+        player.y = newY;
+
+        broadcast(
+          {
+            type: "player-move",
+            newMap: map,
+          },
+          players
+        );
+      }
+      const powerUpIndex = powerUps.findIndex(
+        (p) => p.x === player.x && p.y === player.y
+      );
+      if (powerUpIndex !== -1) {
+        const powerUp = powerUps.splice(powerUpIndex, 1)[0];
+
+        if (powerUp.type === "firepower") {
+          applyPowerUp(
+            player,
+            "firepower",
+            MAX_FIREPOWER,
+            POWER_UP_DURATION,
+            players
+          );
+        } else if (powerUp.type === "bomb") {
+          applyPowerUp(
+            player,
+            "maxBombs",
+            MAX_BOMBS,
+            POWER_UP_DURATION,
+            players
+          );
+        } else if (powerUp.type === "speed") {
+          applyPowerUp(player, "speed", null, POWER_UP_DURATION, players);
+        }
+
+        broadcast(
+          {
+            type: "power-up-collected",
+            name: player.name,
+            x: player.x,
+            y: player.y,
+            powerUp: powerUp.type,
+            newStats: {
+              firepower: player.firepower,
+              maxBombs: player.maxBombs,
+              speed: player.speed,
+            },
+          },
+          players
+        );
+      }
     }
     if (data.type === "drop-bomb") {
       const player = players.get(connection);
@@ -193,89 +278,6 @@ ws.on("request", (req) => {
     players.delete(connection);
   });
 });
-
-function handlePlayerMovment(connection) {
-  if (!players.has(connection)) {
-    return connection.sendUTF(
-      JSON.stringify({ error: "Unregistered player" })
-    );
-  }
-  const player = players.get(connection);
-  if (!player || player.dead) return;
-
-  const { dir } = data;
-  const dirs = {
-    up: { dx: 0, dy: -1 },
-    down: { dx: 0, dy: 1 },
-    left: { dx: -1, dy: 0 },
-    right: { dx: 1, dy: 0 },
-  };
-
-  const direction = dirs[dir];
-  if (!direction) return;
-
-  const { dx, dy } = direction;
-  const newX = player.x + dx;
-  const newY = player.y + dy;
-
-  if (map[newY]?.[newX] === 0) {
-    player.x = newX;
-    player.y = newY;
-
-    broadcast(
-      {
-        type: "player-move",
-        name: player.name,
-        x: newX,
-        y: newY,
-        players,
-      },
-      players
-    );
-  }
-  const powerUpIndex = powerUps.findIndex(
-    (p) => p.x === player.x && p.y === player.y
-  );
-  if (powerUpIndex !== -1) {
-    const powerUp = powerUps.splice(powerUpIndex, 1)[0];
-
-    if (powerUp.type === "firepower") {
-      applyPowerUp(
-        player,
-        "firepower",
-        MAX_FIREPOWER,
-        POWER_UP_DURATION,
-        players
-      );
-    } else if (powerUp.type === "bomb") {
-      applyPowerUp(
-        player,
-        "maxBombs",
-        MAX_BOMBS,
-        POWER_UP_DURATION,
-        players
-      );
-    } else if (powerUp.type === "speed") {
-      applyPowerUp(player, "speed", null, POWER_UP_DURATION, players);
-    }
-
-    broadcast(
-      {
-        type: "power-up-collected",
-        name: player.name,
-        x: player.x,
-        y: player.y,
-        powerUp: powerUp.type,
-        newStats: {
-          firepower: player.firepower,
-          maxBombs: player.maxBombs,
-          speed: player.speed,
-        },
-      },
-      players
-    );
-  }
-}
 
 function createmap() {
   let row = [];
@@ -337,3 +339,11 @@ function createmap() {
 server.listen(3001, () => {
   console.log("Server running at http://0.0.0.0:3000");
 });
+function generateMapSnapshot() {
+  const snapshot = map.map((row) => [...row]);
+  for (const player of players.values()) {
+    snapshot[player.y][player.x] = player.id;
+  }
+
+  return snapshot;
+}
