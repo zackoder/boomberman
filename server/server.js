@@ -343,6 +343,7 @@ function generateMapSnapshot() {
   const snapshot = map.map((row) => [...row]);
   for (const player of players.values()) {
     snapshot[player.y][player.x] = player.id;
+    map[player.y][player.x] = player.id;
   }
 
   return snapshot;
