@@ -56,8 +56,10 @@ body {
   margin: 50px auto;
   /* background-color: #222;   */
 }
-
-.gameContainer > div {
+.err{
+  color: red;
+}
+.gameContainer>div {
   width: 100%;
   height: 100%;
   position: relative;
