@@ -1,6 +1,6 @@
 const { broadcast } = require("./helperFunctions");
 const MAX_ROWS = 15;
-const POWER_UP_TYPES = ["firepower", "bomb", "speed"];
+const POWER_UP_TYPES = ["firepower", "maxBombs", "speed"];
 const powerUps = [];
 const DEFAULT_STATS = {
   firepower: 1,
@@ -88,8 +88,13 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
 
       if (player.lives <= 0) {
         player.dead = true;
-
-        broadcast({ type: "player-dead", name: player.name }, players);
+        map[player.y][player.x] = 0;
+        player.x = 0;
+        player.y = 0;
+        broadcast(
+          { type: "player-dead", newMap: map, name: player.name },
+          players
+        );
 
         conn.sendUTF(
           JSON.stringify({
@@ -124,13 +129,15 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
         map[tile.y][tile.x] = 0;
       }
     }
-    broadcast({ type: "explosion-cleared",newMap: map }, players);
+    broadcast({ type: "explosion-cleared", newMap: map }, players);
   }, 500);
 }
 function applyPowerUp(player, stat, max, duration, players) {
   if (max !== null && player[stat] >= max) return;
+  //  console.log(player[stat]);
 
-  player[stat]++;
+  player.maxBombs++;
+  //  console.log(player[stat]);
 
   const timeoutKey = `${stat}Timeout`;
 
@@ -142,6 +149,7 @@ function applyPowerUp(player, stat, max, duration, players) {
   // Schedule stat reset after duration
   player[timeoutKey] = setTimeout(() => {
     player[stat] = DEFAULT_STATS[stat];
+    // player.maxBombs--;
 
     // Notify client of expired power-up
     broadcast(

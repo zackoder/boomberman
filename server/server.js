@@ -187,7 +187,7 @@ ws.on("request", (req) => {
       const currentcell = map[player.y][player.x];
 
       if (newPosicell !== 1 && newPosicell !== 2 && newPosicell !== 10) {
-        if (newPosicell >= 7 || newPosicell <= 9) {
+        if (newPosicell >= 7 && newPosicell <= 9) {
           applyPowerUp(
             player,
             POWER_UP_TYPES[newPosicell - 6],
@@ -196,15 +196,16 @@ ws.on("request", (req) => {
             players
           );
         }
-        
+
         if (currentcell >= 3 && currentcell <= 6) {
+          console.log("return to 0", player);
           for (const p of players.values()) {
             if (p.y === player.y && player.x === p.x && p.id !== player.id) {
               map[player.y][player.x] = p.id;
-              console.log("return to 0", p);
+              // console.log("return to 0", p);
               break;
             } else if (p.id !== player.id) {
-              console.log(p);
+              // console.log(p);
               map[player.y][player.x] = 0;
               break;
             }
@@ -273,6 +274,7 @@ ws.on("request", (req) => {
       if (bombs.some((b) => b.x === x && b.y === y)) return;
 
       bombs.push({ x, y, owner: name });
+      
       player.activeBombs++;
 
       // notify clients that the bomb is placed by a player !!!!!!!
