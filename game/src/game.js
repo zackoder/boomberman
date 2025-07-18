@@ -42,26 +42,60 @@ export class Game {
 
         let children;
         // this.players.forEach(player => {
-        if (cell >= 3 && cell <= 6) {
-          children = jsx(
-            "div",
-            {
-              class: `player player-${this.players[cell - 3].name}`,
-              style: `background-color: ${this.players[cell - 3].color}`,
-            },
-            jsx("div", { class: "name-label" }, this.players[cell - 3].name)
-          );
+        if (cell >= 3 && cell < 3 + this.players.length) {
+          const player = this.players[cell - 3];
+          if (player) {
+            children = jsx(
+              "div",
+              {
+                class: `player player-${player.name}`,
+                style: `background-color: ${player.color}`,
+              },
+              jsx("div", { class: "name-label" }, player.name)
+            );
+          }
         }
-        // });
 
-        if (cell === 0 || (cell >= 3 && cell <= 6)) {
+        if (cell === 0 || children) {
           mapElements.push(jsx("div", { class: "emptysell" }, children));
         } else if (cell === 1) {
           mapElements.push(jsx("div", { class: "wall" }));
         } else if (cell === 2) {
           mapElements.push(jsx("div", { class: "softwall" }));
-        } else if (cell === 3) {
-          mapElements.push();
+        } else if (cell === 7) {
+          mapElements.push(
+            jsx(
+              "div",
+              { class: "emptysell" },
+              jsx("div", { class: "powerup firepower" }, "🔥")
+            )
+          );
+        } else if (cell === 8) {
+          mapElements.push(
+            jsx(
+              "div",
+              { class: "emptysell" },
+              jsx("div", { class: "powerup bomb" }, "💣")
+            )
+          );
+        } else if (cell === 9) {
+          mapElements.push(
+            jsx(
+              "div",
+              { class: "emptysell" },
+              jsx("div", { class: "powerup speed" }, "🏃‍♂️")
+            )
+          );
+        } else if (cell === 10) {
+          mapElements.push(
+            jsx(
+              "div",
+              { class: "emptysell" },
+              jsx("div", { class: "bomb" }, "💣")
+            )
+          );
+        } else if (cell === 11) {
+          mapElements.push(jsx("div", { class: "emptysell explosion" }, "💥"));
         }
       }
     }

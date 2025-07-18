@@ -1,6 +1,6 @@
 const { broadcast } = require("./helperFunctions");
 const MAX_ROWS = 15;
-const POWER_UP_TYPES = ["firepower", "bomb", "speed"];
+ const POWER_UP_TYPES = ["firepower", "bomb", "speed"];
 const powerUps = [];
 const DEFAULT_STATS = {
   firepower: 1,
@@ -9,7 +9,6 @@ const DEFAULT_STATS = {
 };
 
 function HandleExplosion(map, x, y, owner, players, bombs) {
-  // 🧨 Remove bomb from list
   const index = bombs.findIndex(b => b.x === x && b.y === y && b.owner === owner);
   if (index !== -1) bombs.splice(index, 1);
 
@@ -21,11 +20,9 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
     { dx: 1, dy: 0 },  // right
   ];
 
-  // 🔥 Determine blast range from player firepower
   const player = [...players.values()].find(p => p.name === owner);
   const firepower = player?.firepower || 1;
 
-  // 🌩 Expand in each direction
   for (const { dx, dy } of directions) {
     let nx = x;
     let ny = y;
@@ -34,33 +31,42 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
       nx += dx;
       ny += dy;
 
-      // 🧱 Stop at map boundary or hard wall
       if (nx < 0 || nx >= MAX_ROWS || ny < 0 || ny >= MAX_ROWS) break;
-      if (map[ny][nx] === 1) break;
+      if (map[ny][nx] === 1) break; // hard wall
 
       explosionTiles.push({ x: nx, y: ny });
 
-      // 🌿 If soft wall is hit, destroy it and maybe spawn a power-up
       if (map[ny][nx] === 2) {
+        // soft wall destroyed
         map[ny][nx] = 0;
 
         if (Math.random() < 0.3) {
-          const type = POWER_UP_TYPES[Math.floor(Math.random() * POWER_UP_TYPES.length)];
+        const  powerupindex = Math.floor(Math.random() * POWER_UP_TYPES.length)
+          const type = POWER_UP_TYPES[powerupindex];
           powerUps.push({ x: nx, y: ny, type });
+         map[ny][nx] = 6+powerupindex;
 
           broadcast({
             type: "powerup-appeared",
-            x: nx,
-            y: ny,
-            powerUp: type,
+            map: map,
           }, players);
         }
-        break; // 🔥 Stop fire in that direction after soft wall
+
+        break; // stop fire after hitting soft wall
       }
     }
   }
 
-  // 💀 Check for player deaths
+  // 💥 Mark explosion tiles in the map
+  for (const tile of explosionTiles) {
+    const val = map[tile.y][tile.x];
+    // Only overwrite if not hardwall, softwall, or power-up
+    if (val !== 1 && val !== 2 && val < 7) {
+      map[tile.y][tile.x] = 11; // explosion tile
+    }
+  }
+
+  // 💀 Handle damage
   for (const [conn, player] of players.entries()) {
     if (explosionTiles.some(t => t.x === player.x && t.y === player.y)) {
       player.lives--;
@@ -84,14 +90,13 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
     }
   }
 
-  // 🏆 End game if only one player remains
   const alivePlayers = [...players.values()].filter(p => !p.dead);
   if (alivePlayers.length <= 1) {
     const winner = alivePlayers[0]?.name || null;
     broadcast({ type: "game-over", winner }, players);
   }
 
-  // 🎆 Notify all players of the explosion animation
+  // 🎆 Send explosion event
   broadcast({
     type: "bomb-exploded",
     x,
@@ -99,8 +104,19 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
     explosionTiles,
     map,
   }, players);
-}
 
+  // 🧹 Reset explosion tiles after short delay (e.g., 500ms)
+  setTimeout(() => {
+    for (const tile of explosionTiles) {
+      if (map[tile.y][tile.x] === 11) {
+        map[tile.y][tile.x] = 0;
+      }
+    }
+    broadcast({ type: "explosion-cleared", map }, players);
+    console.log("nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",map);
+    
+  }, 500);
+}
 function applyPowerUp(player, stat, max, duration, players) {
   if (max !== null && player[stat] >= max) return;
 
@@ -142,4 +158,4 @@ function applyPowerUp(player, stat, max, duration, players) {
   }, duration);
 }
 
-module.exports = { HandleExplosion, applyPowerUp, powerUps };
+module.exports = { HandleExplosion, applyPowerUp, powerUps, POWER_UP_TYPES};

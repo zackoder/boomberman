@@ -2,6 +2,7 @@ const {
   HandleExplosion,
   applyPowerUp,
   powerUps,
+  POWER_UP_TYPES,
 } = require("./Functions/gameFunctions");
 const { broadcast } = require("./Functions/helperFunctions");
 
@@ -21,8 +22,8 @@ const START_POSITIONS = [
   { x: 1, y: MAX_ROWS - 2 },
   { x: MAX_ROWS - 2, y: MAX_ROWS - 2 },
 ];
-const MAX_FIREPOWER = 2;
-const MAX_BOMBS = 3;
+const MAX_POWERUP = 3;
+
 // const MAX_SPEED = 2;
 const POWER_UP_DURATION = 30000;
 
@@ -86,7 +87,7 @@ ws.on("request", (req) => {
       };
       players.set(connection, player);
       if (map.length === 0) createmap();
-      let tmp = 2
+      let tmp = 2;
       let interval = null;
       let currentTime = tmp;
       let waiting = 3;
@@ -176,8 +177,12 @@ ws.on("request", (req) => {
       const { dx, dy } = direction;
       const newX = player.x + dx;
       const newY = player.y + dy;
+     const currentcell = map[newY]?.[newX]
 
-      if (map[newY]?.[newX] === 0) {
+      if (currentcell !== 1 && currentcell !== 2 && currentcell !== 10) {
+        if (currentcell >= 7 ||currentcell <=9){
+          applyPowerUp(player,POWER_UP_TYPES[currentcell- 6],MAX_POWERUP,POWER_UP_DURATION,players)
+        }
         map[player.y][player.x] = 0;
         map[newY][newX] = player.id;
         player.x = newX;
@@ -195,43 +200,43 @@ ws.on("request", (req) => {
         (p) => p.x === player.x && p.y === player.y
       );
       if (powerUpIndex !== -1) {
-        const powerUp = powerUps.splice(powerUpIndex, 1)[0];
+        // const powerUp = powerUps.splice(powerUpIndex, 1)[0];
 
-        if (powerUp.type === "firepower") {
-          applyPowerUp(
-            player,
-            "firepower",
-            MAX_FIREPOWER,
-            POWER_UP_DURATION,
-            players
-          );
-        } else if (powerUp.type === "bomb") {
-          applyPowerUp(
-            player,
-            "maxBombs",
-            MAX_BOMBS,
-            POWER_UP_DURATION,
-            players
-          );
-        } else if (powerUp.type === "speed") {
-          applyPowerUp(player, "speed", null, POWER_UP_DURATION, players);
-        }
+        // if (powerUp.type === "firepower") {
+        //   applyPowerUp(
+        //     player,
+        //     "firepower",
+        //     MAX_FIREPOWER,
+        //     POWER_UP_DURATION,
+        //     players
+        //   );
+        // } else if (powerUp.type === "bomb") {
+        //   applyPowerUp(
+        //     player,
+        //     "maxBombs",
+        //     MAX_BOMBS,
+        //     POWER_UP_DURATION,
+        //     players
+        //   );
+        // } else if (powerUp.type === "speed") {
+        //   applyPowerUp(player, "speed", null, POWER_UP_DURATION, players);
+        // }
 
-        broadcast(
-          {
-            type: "power-up-collected",
-            name: player.name,
-            x: player.x,
-            y: player.y,
-            powerUp: powerUp.type,
-            newStats: {
-              firepower: player.firepower,
-              maxBombs: player.maxBombs,
-              speed: player.speed,
-            },
-          },
-          players
-        );
+        // broadcast(
+        //   {
+        //     type: "power-up-collected",
+        //     name: player.name,
+        //     x: player.x,
+        //     y: player.y,
+        //     powerUp: powerUp.type,
+        //     newStats: {
+        //       firepower: player.firepower,
+        //       maxBombs: player.maxBombs,
+        //       speed: player.speed,
+        //     },
+        //   },
+        //   players
+        // );
       }
     }
     if (data.type === "drop-bomb") {
@@ -250,14 +255,15 @@ ws.on("request", (req) => {
       broadcast(
         {
           type: "bomb-placed",
-          x,
-          y,
+          newMap: map,
         },
         players
       );
 
       // set a timeout to the explosion
+      map[y][x] = 10;
       setTimeout(() => {
+        map[y][x] = 0;
         HandleExplosion(map, x, y, name, players, bombs);
         player.activeBombs--;
       }, 1200);

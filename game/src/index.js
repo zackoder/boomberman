@@ -6,7 +6,7 @@ import { render } from "./core/render.js";
 import { useState } from "./core/state.js";
 
 let moveDelay = 200;
-const MAX_ROWS = 15;
+// const MAX_ROWS = 15;
 export const rout = new Router();
 let socket = null;
 let localPlayer = {};
@@ -14,7 +14,6 @@ let allPlayers = {};
 
 let game = null;
 let players = null;
-let playersCounter;
 
 rout.addrout("/", homePage);
 rout.addrout("/game", gamehandler);
@@ -267,64 +266,61 @@ function handlemsgs() {
       // }
     }
     if (data.type === "player-leave") {
-      document
-        .querySelectorAll(`.player-${data.name}`)
-        .forEach((el) => el.classList.remove("player"));
-      delete allPlayers[data.name];
+      ManegAllPlayers.setState(data.palayers);
     }
     if (data.type === "bomb-placed") {
-      drawBomb(data.x, data.y);
+      ManegAllPlayers.setState(data.palayers);
+      // drawBomb(data.x, data.y);
     }
     if (data.type === "bomb-exploded") {
-      animateExplosion(data.explosionTiles);
-      removeBomb(data.x, data.y);
+    
+      ManegAllPlayers.setState(data.palayers);
+
     }
     if (data.type === "player-dead") {
-      document
-        .querySelectorAll(`.player-${data.name}`)
-        .forEach((el) => el.remove());
-      delete allPlayers[data.name];
+       ManegAllPlayers.setState(data.palayers);
     }
-    if (data.type === "powerup-appeared") {
-      placePowerUp(data.x, data.y, data.powerUp);
-    }
+    // if (data.type === "powerup-appeared") {
+    //   placePowerUp(data.x, data.y, data.powerUp);
+    // }
     // this whole section should be updated there should be no queryselectors
     // ## khdaam 3la raseek a si waliiiid
 
-    if (data.type === "update-lives" && data.name === localPlayer.name) {
-      document.querySelector("#hud-lives").textContent = data.lives;
-    }
+    // if (data.type === "update-lives" && data.name === localPlayer.name) {
+    //   document.querySelector("#hud-lives").textContent = data.lives;
+    // }
     if (data.type === "power-up-collected") {
-      removePowerUp(data.x, data.y);
-      if (data.name === localPlayer.name) {
-        document.querySelector("#hud-fire").textContent =
-          data.newStats.firepower;
-        document.querySelector("#hud-bombs").textContent =
-          data.newStats.maxBombs;
-        document.querySelector("#hud-speed").textContent = `x${200 / data.newStats.speed
-          }`;
-      }
+      ManegAllPlayers.setState(data.palayers);
+      // removePowerUp(data.x, data.y);
+      // if (data.name === localPlayer.name) {
+      //   document.querySelector("#hud-fire").textContent =
+      //     data.newStats.firepower;
+      //   document.querySelector("#hud-bombs").textContent =
+      //     data.newStats.maxBombs;
+      //   document.querySelector("#hud-speed").textContent = `x${200 / data.newStats.speed
+      //     }`;
+      // }
     }
-    if (data.type === "power-up-expired") {
-      if (data.name === localPlayer.name) {
-        if (data.stat === "firepower") {
-          document.querySelector("#hud-fire").textContent = data.value;
-          localPlayer.firepower = data.value;
-        } else if (data.stat === "maxBombs") {
-          document.querySelector("#hud-bombs").textContent = data.value;
-          localPlayer.maxBombs = data.value;
-        } else if (data.stat === "speed") {
-          document.querySelector("#hud-speed").textContent = "1";
-          localPlayer.speed = data.value;
-        }
-      }
-    }
-    if (data.type === "update-speed" && data.name === localPlayer.name) {
-      moveDelay = data.speed;
-      localPlayer.speed = data.speed;
-      document.querySelector("#hud-speed").textContent = `x${200 / moveDelay}`;
-      throttledMove = throttle(handleMove, moveDelay);
-    }
+    // if (data.type === "power-up-expired") {
+    //   if (data.name === localPlayer.name) {
+    //     if (data.stat === "firepower") {
+    //       document.querySelector("#hud-fire").textContent = data.value;
+    //       localPlayer.firepower = data.value;
+    //     } else if (data.stat === "maxBombs") {
+    //       document.querySelector("#hud-bombs").textContent = data.value;
+    //       localPlayer.maxBombs = data.value;
+    //     } else if (data.stat === "speed") {
+    //       document.querySelector("#hud-speed").textContent = "1";
+    //       localPlayer.speed = data.value;
+    //     }
+    //   }
+    // }
+    // if (data.type === "update-speed" && data.name === localPlayer.name) {
+    //   moveDelay = data.speed;
+    //   localPlayer.speed = data.speed;
+    //   document.querySelector("#hud-speed").textContent = `x${200 / moveDelay}`;
+    //   throttledMove = throttle(handleMove, moveDelay);
+    // }
 
     if (data.type === "game-over") {
       gameOver(data.winner);
@@ -360,7 +356,6 @@ export function gamehandler() {
       if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ type: "drop-bomb" }));
       }
-
       throttledMove(e);
     },
   },
@@ -393,48 +388,48 @@ gameLoop()
 // function drawmap() {
 // }
 // power-UPS section
-function placePowerUp(x, y, kind) {
-  const index = y * MAX_ROWS + x;
-  const cell = document.querySelectorAll(".gameContainer > div")[index];
+// function placePowerUp(x, y, kind) {
+//   const index = y * MAX_ROWS + x;
+//   const cell = document.querySelectorAll(".gameContainer > div")[index];
 
-  if (cell) {
-    // Remove existing powerup first ,if there is any
-    const existing = cell.querySelector(".powerup");
-    if (existing) existing.remove();
+//   if (cell) {
+//     // Remove existing powerup first ,if there is any
+//     const existing = cell.querySelector(".powerup");
+//     if (existing) existing.remove();
 
-    // Create power-up
-    const powerup = jsx("div", { class: `powerup ${kind}` });
-    powerup.textContent = getPowerupSymbol(kind);
-    cell.appendChild(powerup);
-  }
-}
+//     // Create power-up
+//     const powerup = jsx("div", { class: `powerup ${kind}` });
+//     powerup.textContent = getPowerupSymbol(kind);
+//     cell.appendChild(powerup);
+//   }
+// }
 
-function getPowerupSymbol(kind) {
-  switch (kind) {
-    case "bomb":
-      return "B";
-    case "firepower":
-      return "F";
-    case "speed":
-      return "S";
-    case "random":
-      return "?";
-    default:
-      return "";
-  }
-}
+// function getPowerupSymbol(kind) {
+//   switch (kind) {
+//     case "bomb":
+//       return "B";
+//     case "firepower":
+//       return "F";
+//     case "speed":
+//       return "S";
+//     case "random":
+//       return "?";
+//     default:
+//       return "";
+//   }
+// }
 
-function checkForPowerUp(playerX, playerY) {
-  const index = playerY * MAX_ROWS + playerX;
-  const cell = document.querySelectorAll(".gameContainer > div")[index];
-  const powerup = cell.querySelector(".powerup");
-  if (powerup) {
-    const kind = [...powerup.classList].find((cls) => cls !== "powerup");
-    powerup.remove();
+// function checkForPowerUp(playerX, playerY) {
+//   const index = playerY * MAX_ROWS + playerX;
+//   const cell = document.querySelectorAll(".gameContainer > div")[index];
+//   const powerup = cell.querySelector(".powerup");
+//   if (powerup) {
+//     const kind = [...powerup.classList].find((cls) => cls !== "powerup");
+//     powerup.remove();
 
-    console.log("Power-up collected:", kind);
-  }
-}
+//     console.log("Power-up collected:", kind);
+//   }
+// }
 
 // function renderPlayer(player) {
 //   console.log("Playererrrrrrrr", player);
@@ -476,49 +471,49 @@ function submitName(e) {
   socket.send(JSON.stringify({ type: "name", name }));
 }
 
-function animateExplosion(explosionTiles) {
-  for (const tile of explosionTiles) {
-    const index = tile.y * MAX_ROWS + tile.x;
-    const cell = document.querySelectorAll(".gameContainer > div")[index];
-    if (cell) {
-      if (!cell.classList.contains("wall")) {
-        const explosion = jsx("div", { class: "explosion" });
-        cell.appendChild(explosion);
-        setTimeout(() => explosion.remove(), 500);
-      }
+// function animateExplosion(explosionTiles) {
+//   for (const tile of explosionTiles) {
+//     const index = tile.y * MAX_ROWS + tile.x;
+//     const cell = document.querySelectorAll(".gameContainer > div")[index];
+//     if (cell) {
+//       if (!cell.classList.contains("wall")) {
+//         const explosion = jsx("div", { class: "explosion" });
+//         cell.appendChild(explosion);
+//         setTimeout(() => explosion.remove(), 500);
+//       }
 
-      if (cell.classList.contains("softwall")) {
-        cell.classList.remove("softwall");
-        cell.classList.add("emptysell");
-      }
-    }
-  }
-}
+//       if (cell.classList.contains("softwall")) {
+//         cell.classList.remove("softwall");
+//         cell.classList.add("emptysell");
+//       }
+//     }
+//   }
+// }
 
-function drawBomb(x, y) {
-  const index = y * MAX_ROWS + x;
-  const cell = document.querySelectorAll(".gameContainer > div")[index];
-  if (!cell) return;
-  const bomb = jsx("div", { class: "bomb" });
-  cell.appendChild(bomb);
-}
+// function drawBomb(x, y) {
+//   const index = y * MAX_ROWS + x;
+//   const cell = document.querySelectorAll(".gameContainer > div")[index];
+//   if (!cell) return;
+//   const bomb = jsx("div", { class: "bomb" });
+//   cell.appendChild(bomb);
+// }
 
-function removeBomb(x, y) {
-  const index = y * MAX_ROWS + x;
-  const cell = document.querySelectorAll(".gameContainer > div")[index];
-  if (!cell) return;
-  const bomb = cell.querySelector(".bomb");
-  if (bomb) bomb.remove();
-}
+// function removeBomb(x, y) {
+//   const index = y * MAX_ROWS + x;
+//   const cell = document.querySelectorAll(".gameContainer > div")[index];
+//   if (!cell) return;
+//   const bomb = cell.querySelector(".bomb");
+//   if (bomb) bomb.remove();
+// }
 
-function removePowerUp(x, y) {
-  const index = y * MAX_ROWS + x;
-  const cell = document.querySelectorAll(".gameContainer > div")[index];
-  if (cell) {
-    const powerup = cell.querySelector(".powerup");
-    if (powerup) powerup.remove();
-  }
-}
+// function removePowerUp(x, y) {
+//   const index = y * MAX_ROWS + x;
+//   const cell = document.querySelectorAll(".gameContainer > div")[index];
+//   if (cell) {
+//     const powerup = cell.querySelector(".powerup");
+//     if (powerup) powerup.remove();
+//   }
+// }
 
 function gameOver(winnerName = "Unknown") {
   alreadyStarted = false;
