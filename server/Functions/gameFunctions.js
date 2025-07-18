@@ -99,8 +99,6 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
   // 🎆 Send explosion event
   broadcast({
     type: "bomb-exploded",
-    x,
-    y,
     explosionTiles,
     map,
   }, players);
@@ -113,7 +111,7 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
       }
     }
     broadcast({ type: "explosion-cleared", map }, players);
-    console.log("nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",map);
+    // console.log("nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",map);
     
   }, 500);
 }
@@ -128,10 +126,11 @@ function applyPowerUp(player, stat, max, duration, players) {
   if (player[timeoutKey]) {
     clearTimeout(player[timeoutKey]);
   }
+  
 
   // Schedule stat reset after duration
   player[timeoutKey] = setTimeout(() => {
-    player[stat] = DEFAULT_STATS[stat] ?? 1;
+    player[stat] = DEFAULT_STATS[stat] ;
 
     // Notify client of expired power-up
     broadcast(

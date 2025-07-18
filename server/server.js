@@ -177,13 +177,31 @@ ws.on("request", (req) => {
       const { dx, dy } = direction;
       const newX = player.x + dx;
       const newY = player.y + dy;
-     const currentcell = map[newY]?.[newX]
+      const currentcell = map[newY]?.[newX];
 
       if (currentcell !== 1 && currentcell !== 2 && currentcell !== 10) {
-        if (currentcell >= 7 ||currentcell <=9){
-          applyPowerUp(player,POWER_UP_TYPES[currentcell- 6],MAX_POWERUP,POWER_UP_DURATION,players)
+        if (currentcell >= 7 || currentcell <= 9) {
+          applyPowerUp(
+            player,
+            POWER_UP_TYPES[currentcell - 6],
+            MAX_POWERUP,
+            POWER_UP_DURATION,
+            players
+          );
         }
-        map[player.y][player.x] = 0;
+        if (currentcell >= 3 || currentcell <= 6){
+          
+          for (const p of players.values()) {
+            if (p.id != player.id && p.y === player.y && player.x ===p.x  ) {
+              map[player.y][player.x] = p.id;
+
+              break
+            } else {
+              map[player.y][player.x] = 0;
+              break;
+            }
+          }
+        }
         map[newY][newX] = player.id;
         player.x = newX;
         player.y = newY;
@@ -201,7 +219,6 @@ ws.on("request", (req) => {
       );
       if (powerUpIndex !== -1) {
         // const powerUp = powerUps.splice(powerUpIndex, 1)[0];
-
         // if (powerUp.type === "firepower") {
         //   applyPowerUp(
         //     player,
@@ -221,7 +238,6 @@ ws.on("request", (req) => {
         // } else if (powerUp.type === "speed") {
         //   applyPowerUp(player, "speed", null, POWER_UP_DURATION, players);
         // }
-
         // broadcast(
         //   {
         //     type: "power-up-collected",
