@@ -87,7 +87,7 @@ ws.on("request", (req) => {
       };
       players.set(connection, player);
       if (map.length === 0) createmap();
-      let tmp = 20;
+      let tmp = 2;
       let interval = null;
       let currentTime = tmp;
       let waiting = 3;
@@ -139,6 +139,7 @@ ws.on("request", (req) => {
         }, 1000);
       }
     }
+    // someone enters the game
     if (!gameStat) {
       broadcast(
         {

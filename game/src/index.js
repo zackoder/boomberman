@@ -28,11 +28,9 @@ const ManageError = new useState("")
 
 export function homePage() {
   localPlayer = ManegLocalPlayer.getStat()
-  console.log(localPlayer, "fghfytfty");
 
   handlemsgs();
   const currentTime = ManageTimer.getStat()
-  console.log(currentTime);
 
   const timerContainer = jsx("p", { class: "timer" }, "Timer : ", currentTime);
 
@@ -63,7 +61,6 @@ export function homePage() {
       jsx("span", {}, `${msg.message}`)
     );
   })
-  console.log(prevMessages);
 
   const chatSection = jsx(
     "div",
@@ -184,7 +181,6 @@ function handlemsgs() {
       // requestAnimationFrame(game.drawMap(allPlayers));
 
       alreadyStarted = true;
-      console.log("started");
       moveDelay = allPlayers[ManegLocalPlayer.getStat().name]?.speed || 200;
       throttledMove = throttle(handleMove, moveDelay);
     }
@@ -214,32 +210,47 @@ function handlemsgs() {
       ManageError.setState(data.error);
     }
     if (data.name) {
-      ManegLocalPlayer.setState({ name: data.name });
-      localPlayer.name = data.name;
+      // console.log("-----------------------", localPlayer);
+      if (!localPlayer?.name) {
+        ManegLocalPlayer.setState({
+          name: data.name, lives: 3,
+          maxBombs: 3,
+          firepower: 3,
+          speed: 200,
+        });
+        localPlayer.name = data.name;
+      }
       ManageError.setState("");
     }
     if (data.time) {
       ManageTimer.setState(data.time);
     }
 
+    if (data.Upplayer) {
+      localPlayer = ManegLocalPlayer.getStat()
+      // console.log(data.Upplayer.name, localPlayer.name);
+      if (data.Upplayer.name === localPlayer.name) {
+        ManegLocalPlayer.setState(data.Upplayer)
+      }
 
+    }
     if (data.players) {
       localPlayer = ManegLocalPlayer.getStat()
       ManegLocalPlayer.setState({
         ...localPlayer,
         playersCounter: data.players,
       });
+      console.log(localPlayer = ManegLocalPlayer.getStat())
     }
 
     if (data.type === "init") {
       game = new Game(data.map, data.players);
       players = data.palayers;
-      console.log(players);
 
       for (let player of data.players) {
         allPlayers[player.name] = { ...player };
       }
-      ManegAllPlayers.setState(allPlayers);
+      // ManegAllPlayers.setState(allPlayers);
       //  requestAnimationFrame(game.drawMap(allPlayers))
       ManageMap.setState(data.map)
       // for (let [key, value] of Object.entries(allPlayers)) {
@@ -331,17 +342,17 @@ rout.handleRouteChange();
 export function gamehandler() {
   // startanimating();
   if (game === null || players === null) return rout.navigate("/");
-  // console.log("test");
+  localPlayer = ManegLocalPlayer.getStat()
 
-  const lives = jsx("p", {}, "❤️ Lives:", jsx("span", { id: "hud-lives" }, 3));
+  const lives = jsx("p", {}, "❤️ Lives:", jsx("span", { id: "hud-lives" }, localPlayer.lives));
   const firepower = jsx(
     "p",
     {},
     "🔥 Firepower:",
-    jsx("span", { id: "hud-fire" }, 1)
+    jsx("span", { id: "hud-fire" }, localPlayer.firepower)
   );
-  const Bombs = jsx("p", {}, "💣 Bombs: ", jsx("span", { id: "hud-bombs" }, 1));
-  const Speed = jsx("p", {}, "👠 Speed: ", jsx("span", { id: "hud-speed" }, 1));
+  const Bombs = jsx("p", {}, "💣 Bombs: ", jsx("span", { id: "hud-bombs" }, localPlayer.maxBombs));
+  const Speed = jsx("p", {}, "👠 Speed: ", jsx("span", { id: "hud-speed" }, (localPlayer.speed / 100)));
   const hud = jsx("div", { class: "hud" }, lives, firepower, Bombs, Speed);
 
   const map = game.drawMap(ManageMap.getStat())

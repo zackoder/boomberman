@@ -1,4 +1,5 @@
-function broadcast(data, players={}) {
+function broadcast(data, players = {}) {
+
   if (!players || typeof players[Symbol.iterator] !== 'function') {
     throw new Error("Missing or invalid 'players' argument in broadcast");
   }
@@ -6,4 +7,4 @@ function broadcast(data, players={}) {
     conn.sendUTF(JSON.stringify(data));
   }
 }
-module.exports = {broadcast};
+module.exports = { broadcast };

@@ -78,31 +78,45 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
     if (explosionTiles.some((t) => t.x === player.x && t.y === player.y)) {
       player.lives--;
 
-      conn.sendUTF(
-        JSON.stringify({
-          type: "update-lives",
-          name: player.name,
-          lives: player.lives,
-        })
-      );
+      // conn.sendUTF(
+      //   JSON.stringify({
+      //     type: "update-lives",
+      //     name: player.name,
+      //     lives: player.lives,
+      //   })
+      // );
 
       if (player.lives <= 0) {
         player.dead = true;
         map[player.y][player.x] = 0;
         player.x = 0;
         player.y = 0;
-        broadcast(
-          { type: "player-dead", newMap: map, name: player.name },
-          players
-        );
 
-        conn.sendUTF(
-          JSON.stringify({
-            restart: "restart",
-            message: "You lost!",
-          })
-        );
+
+        // conn.sendUTF(
+        //   JSON.stringify({
+        //     restart: "restart",
+        //     message: "You lost!",
+        //   })
+        // );
       }
+      /* 
+        name: 'zzzzz',
+        x: 10,
+        y: 1,
+        id: 4,
+        lives: 1,
+        maxBombs: 2,
+        activeBombs: 1,
+        firepower: 1,
+        speed: 200,
+        color: 'blue',
+
+      */
+      broadcast(
+        { Upplayer: { name: player.name, lives: player.lives, maxBombs: player.maxBombs, firepower: player.firepower, speed: player.speed }, type: "player-dead", newMap: map, name: player.name },
+        players
+      );
     }
   }
 
@@ -128,31 +142,15 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
       if (map[tile.y][tile.x] === 11) {
 
         for (let [conn, p] of players) {
-          console.log("player name", p.name);
 
           if (tile.y === p.y && p.x === tile.x) {
-            console.log("here", p.name);
-            // if (player.)
-
             map[tile.y][tile.x] = p.id;
-            // console.log("return to 0", p);
             break;
           } else {
-            // console.log(p);
-            // map[player.y][player.x] = 0;
-            console.log("here didn't die", p.name);
-            // if (map[tile.y][tile.x] === 11){
-              
-            // }
             map[tile.y][tile.x] = 0;
-            // break;
-
-            
-            
           }
         }
       } else {
-        console.log("here 2", map[tile.y][tile.x]);
       }
     }
     broadcast({ type: "explosion-cleared", newMap: map }, players);
