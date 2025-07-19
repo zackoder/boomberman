@@ -2,11 +2,10 @@ let {
   HandleExplosion,
   applyPowerUp,
   powerUps,
-  aliveplayers,
   POWER_UP_TYPES,
 } = require("./Functions/gameFunctions");
 const { broadcast } = require("./Functions/helperFunctions");
-
+let aliveplayers;
 const express = require("express");
 const app = express();
 const http = require("http");
@@ -278,7 +277,7 @@ ws.on("request", (req) => {
       map[y][x] = 10;
       setTimeout(() => {
         map[y][x] = 0;
-        HandleExplosion(map, x, y, name, players, bombs);
+        HandleExplosion(map, x, y, name, players, bombs, aliveplayers);
         player.activeBombs--;
       }, 1200);
     }
@@ -288,10 +287,12 @@ ws.on("request", (req) => {
     const leavingPlayer = players.get(connection);
     // const player = players[connection]
     if (leavingPlayer) {
-      map[leavingPlayer.y][leavingPlayer.x] = 0
-      leavingPlayer.y = 0
-      leavingPlayer.x = 0
-      aliveplayers--;
+      if (leavingPlayer.y !== 0 && leavingPlayer.x !== 0) {
+        map[leavingPlayer.y][leavingPlayer.x] = 0
+        leavingPlayer.y = 0
+        leavingPlayer.x = 0
+        aliveplayers--;
+      }
 
       broadcast(
         {

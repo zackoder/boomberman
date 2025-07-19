@@ -25,6 +25,8 @@ const ManageTimer = new useState(20);
 const Managemessages = new useState([]);
 const ManegAllPlayers = new useState({});
 const ManageError = new useState("");
+const Managewinner = new useState("");
+const Manageloser = new useState("");
 
 export function homePage() {
   localPlayer = ManegLocalPlayer.getStat();
@@ -144,7 +146,6 @@ function chatHandler(e) {
 let alreadyStarted = false;
 let throttledMove = null;
 function handleMove(e) {
-  // console.log("hihi", e);
   if (e.key !== "F5") e.preventDefault();
   const keyMap = {
     ArrowUp: "up",
@@ -175,6 +176,12 @@ function handlemsgs() {
     const data = JSON.parse(e.data);
 
     if (!data) return;
+    if (data.winnerMessage) {
+      Managewinner.setState(data.winnerMessage)
+    }
+    if (data.losermessage) {
+      Manageloser.setState(data.losermessage)
+    }
     if (data.newMap) {
       game.setNewMap(data.newMap);
       ManageMap.setState(data.newMap);
@@ -287,19 +294,19 @@ function handlemsgs() {
       //   checkForPowerUp(data.x, data.y);
       // }
     }
-    if (data.type === "player-leave") {
-      ManegAllPlayers.setState(data.palayers);
-    }
-    if (data.type === "bomb-placed") {
-      ManegAllPlayers.setState(data.palayers);
-      // drawBomb(data.x, data.y);
-    }
-    if (data.type === "bomb-exploded") {
-      ManegAllPlayers.setState(data.palayers);
-    }
-    if (data.type === "player-dead") {
-      ManegAllPlayers.setState(data.palayers);
-    }
+    // if (data.type === "player-leave") {
+    //   ManegAllPlayers.setState(data.palayers);
+    // }
+    // if (data.type === "bomb-placed") {
+    //   ManegAllPlayers.setState(data.palayers);
+    // drawBomb(data.x, data.y);
+    // }
+    // if (data.type === "bomb-exploded") {
+    //   ManegAllPlayers.setState(data.palayers);
+    // }
+    // if (data.type === "player-dead") {
+    //   ManegAllPlayers.setState(data.palayers);
+    // }
     // if (data.type === "powerup-appeared") {
     //   placePowerUp(data.x, data.y, data.powerUp);
     // }
@@ -354,6 +361,21 @@ export function gamehandler() {
   // startanimating();
   if (game === null || players === null) return rout.navigate("/");
   localPlayer = ManegLocalPlayer.getStat();
+  const loser = Manageloser.getStat()
+  const winner = Managewinner.getStat()
+
+
+  const winnerComp = jsx()
+
+  const loserComp = jsx()
+
+  if (winner) {
+    return winnerComp
+  }
+
+  if (loser) {
+    return loserComp
+  }
 
   const lives = jsx(
     "p",

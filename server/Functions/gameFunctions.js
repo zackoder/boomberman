@@ -1,5 +1,4 @@
 const { broadcast } = require("./helperFunctions");
-let aliveplayers
 const MAX_ROWS = 15;
 const POWER_UP_TYPES = ["speed", "firepower", "maxBombs"];
 const powerUps = [];
@@ -9,7 +8,7 @@ const DEFAULT_STATS = {
   speed: 200,
 };
 
-function HandleExplosion(map, x, y, owner, players, bombs) {
+function HandleExplosion(map, x, y, owner, players, bombs, aliveplayers) {
   const index = bombs.findIndex(
     (b) => b.x === x && b.y === y && b.owner === owner
   );
@@ -115,17 +114,28 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
         color: 'blue',
 
       */
+      console.log("aliveplayers", aliveplayers);
+
       if (aliveplayers === 1) {
 
         // const alivePlayers = [...players.values()].filter((p) => {  conn, !p.dead });
         // if (alivePlayers.length <= 1) {
         // const winner = alivePlayers[0]?.name || null;
         for (const [conn, player] of players.entries()) {
+          console.log("hello", player.name);
+
           if (!player.dead) {
             conn.sendUTF(
               JSON.stringify({
                 // restart: "restart",
-                message: "we have a winner " + player.name,
+                winnerMessage: "we have a winner " + player.name,
+              })
+            );
+          } else {
+            conn.sendUTF(
+              JSON.stringify({
+                // restart: "restart",
+                losermessage: "fuck of loser " + player.name,
               })
             );
           }
@@ -251,4 +261,4 @@ function applyPowerUp(player, power, POWER_UP_DURATION, players) {
   }, POWER_UP_DURATION);
 }
 
-module.exports = { HandleExplosion, applyPowerUp, powerUps, POWER_UP_TYPES, aliveplayers };
+module.exports = { HandleExplosion, applyPowerUp, powerUps, POWER_UP_TYPES };
