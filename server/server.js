@@ -1,7 +1,8 @@
-const {
+let {
   HandleExplosion,
   applyPowerUp,
   powerUps,
+  aliveplayers,
   POWER_UP_TYPES,
 } = require("./Functions/gameFunctions");
 const { broadcast } = require("./Functions/helperFunctions");
@@ -57,8 +58,6 @@ ws.on("request", (req) => {
         createmap();
       }
       for (let [conn, p] of players) {
-        // console.log(p);
-        console.log("player", p.name);
         if (data.name === p.name) {
           connection.sendUTF(
             JSON.stringify({ error: "the player name already existe" })
@@ -95,6 +94,7 @@ ws.on("request", (req) => {
       if (players.size == 2) {
         interval = setInterval(() => {
           if (players.size === 4 || currentTime <= 0) {
+            aliveplayers = players.size
             clearInterval(interval);
             gameStat = true;
             currentTime = tmp;
@@ -122,12 +122,12 @@ ws.on("request", (req) => {
       let beforestart = null;
       if (!beforestart) {
         beforestart = setInterval(() => {
+          if (players.size < 2) {
+            broadcast({ players: players.size, restart: "restart" }, players);
+            clearInterval(beforestart);
+            return;
+          }
           if (gameStat) {
-            if (players.size < 2) {
-              broadcast({ players: players.size, restart: "restart" }, players);
-              clearInterval(beforestart);
-              return;
-            }
             if (waiting <= 0) {
               broadcast({ gameStarted: true }, players);
               clearInterval(beforestart);
@@ -139,7 +139,7 @@ ws.on("request", (req) => {
         }, 1000);
       }
     }
-    // someone enters the game
+    // if someone joined the game before it starts
     if (!gameStat) {
       broadcast(
         {
@@ -178,11 +178,11 @@ ws.on("request", (req) => {
       const newY = player.y + dy;
       const newPosicell = map[newY]?.[newX];
       const currentcell = map[player.y][player.x];
-   
-    
+
+
       if (newPosicell !== 1 && newPosicell !== 2 && newPosicell !== 10) {
         if (newPosicell >= 7 && newPosicell <= 9) {
-          applyPowerUp(player, newPosicell,POWER_UP_DURATION, players);
+          applyPowerUp(player, newPosicell, POWER_UP_DURATION, players);
         }
 
         if (currentcell >= 3 && currentcell <= 6) {
@@ -286,11 +286,18 @@ ws.on("request", (req) => {
 
   connection.on("close", () => {
     const leavingPlayer = players.get(connection);
+    // const player = players[connection]
     if (leavingPlayer) {
+      map[leavingPlayer.y][leavingPlayer.x] = 0
+      leavingPlayer.y = 0
+      leavingPlayer.x = 0
+      aliveplayers--;
+
       broadcast(
         {
           type: "player-leave",
           name: leavingPlayer.name,
+          newMap: map,
         },
         players
       );

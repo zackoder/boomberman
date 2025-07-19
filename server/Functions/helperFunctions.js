@@ -7,4 +7,11 @@ function broadcast(data, players = {}) {
     conn.sendUTF(JSON.stringify(data));
   }
 }
+
+const STARING_STAR = {
+  alivePlayers: 0,
+  gameStat: false,
+  gameOver: false
+}
+
 module.exports = { broadcast };

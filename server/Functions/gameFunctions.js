@@ -1,6 +1,7 @@
 const { broadcast } = require("./helperFunctions");
+let aliveplayers
 const MAX_ROWS = 15;
-const POWER_UP_TYPES = ["speed","maxBombs", "firepower"];
+const POWER_UP_TYPES = ["speed", "firepower", "maxBombs"];
 const powerUps = [];
 const DEFAULT_STATS = {
   firepower: 1,
@@ -92,6 +93,7 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
         player.x = 0;
         player.y = 0;
 
+        aliveplayers--
 
         // conn.sendUTF(
         //   JSON.stringify({
@@ -113,18 +115,35 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
         color: 'blue',
 
       */
+      if (aliveplayers === 1) {
+
+        // const alivePlayers = [...players.values()].filter((p) => {  conn, !p.dead });
+        // if (alivePlayers.length <= 1) {
+        // const winner = alivePlayers[0]?.name || null;
+        for (const [conn, player] of players.entries()) {
+          if (!player.dead) {
+            conn.sendUTF(
+              JSON.stringify({
+                // restart: "restart",
+                message: "we have a winner " + player.name,
+              })
+            );
+          }
+          // alivePlayers.conn
+        }
+
+        // broadcast({ type: "game-over", winner }, players);
+        // }
+      }
+
       broadcast(
-        { Upplayer: { name: player.name, lives: player.lives, maxBombs: player.maxBombs, firepower: player.firepower, speed: player.speed }, type: "player-dead", newMap: map, name: player.name },
+        { Upplayer: { name: player.name, lives: player.lives, maxBombs: player.maxBombs, firepower: player.firepower, speed: player.speed === 200 ? 1 : 2 }, type: "player-dead", newMap: map, name: player.name },
         players
       );
     }
   }
 
-  const alivePlayers = [...players.values()].filter((p) => !p.dead);
-  if (alivePlayers.length <= 1) {
-    const winner = alivePlayers[0]?.name || null;
-    broadcast({ type: "game-over", winner }, players);
-  }
+
 
   // 🎆 Send explosion event
   broadcast(
@@ -156,12 +175,12 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
     broadcast({ type: "explosion-cleared", newMap: map }, players);
   }, 500);
 }
-function applyPowerUp(player, power,POWER_UP_DURATION, players) {
+function applyPowerUp(player, power, POWER_UP_DURATION, players) {
   // if (!player || player.dead) return;
 
   let stat;
   let max;
-  
+
   if (power === 7 && player.firepower < 2) {
     stat = "firepower";
     player.firepower++;
@@ -172,8 +191,8 @@ function applyPowerUp(player, power,POWER_UP_DURATION, players) {
     max = 3;
   } else if (power === 9) {
     stat = "speed";
-    player.speed = 100; 
-    broadcast({type :"update-speed"},players)
+    player.speed = 100;
+    broadcast({ type: "update-speed" }, players)
   } else {
     return;
   }
@@ -185,11 +204,18 @@ function applyPowerUp(player, power,POWER_UP_DURATION, players) {
     x: player.x,
     y: player.y,
     powerUp: stat,
-    newStats: {
-      firepower: player.firepower,
+    Upplayer: {
+      name: player.name,
+      lives: player.lives,
       maxBombs: player.maxBombs,
-      speed: player.speed,
-    },
+      firepower: player.firepower,
+      speed: player.speed === 200 ? 1 : 2
+    }
+    // newStats: {
+    //   firepower: player.firepower,
+    //   maxBombs: player.maxBombs,
+    //   speed: player.speed,
+    // },
   }, players);
 
   // Schedule stat reset
@@ -206,6 +232,13 @@ function applyPowerUp(player, power,POWER_UP_DURATION, players) {
       name: player.name,
       stat,
       value: player[stat],
+      Upplayer: {
+        name: player.name,
+        lives: player.lives,
+        maxBombs: player.maxBombs,
+        firepower: player.firepower,
+        speed: player.speed === 200 ? 1 : 2
+      }
     }, players);
 
     if (stat === "speed") {
@@ -218,4 +251,4 @@ function applyPowerUp(player, power,POWER_UP_DURATION, players) {
   }, POWER_UP_DURATION);
 }
 
-module.exports = { HandleExplosion, applyPowerUp, powerUps, POWER_UP_TYPES };
+module.exports = { HandleExplosion, applyPowerUp, powerUps, POWER_UP_TYPES, aliveplayers };

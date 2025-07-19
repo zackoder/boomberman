@@ -109,7 +109,7 @@ export function homePage() {
     "p",
     { class: "playersCounter" },
     "the current number of player(s) is; " +
-      (playersCounternbr ? playersCounternbr : 0)
+    (playersCounternbr ? playersCounternbr : 0)
   );
   let pinfo;
   if (playersCounternbr) {
@@ -228,9 +228,9 @@ function handlemsgs() {
         ManegLocalPlayer.setState({
           name: data.name,
           lives: 3,
-          maxBombs: 3,
-          firepower: 3,
-          speed: 200,
+          maxBombs: 1,
+          firepower: 1,
+          speed: 1,
         });
         localPlayer.name = data.name;
       }
@@ -339,9 +339,9 @@ function handlemsgs() {
       localPlayer.speed = data.speed;
       // document.querySelector("#hud-speed").textContent = `x${200 / moveDelay}`;
       throttledMove = throttle(handleMove, moveDelay);
-     ManegAllPlayers.setState(data.palayers);
+      ManegAllPlayers.setState(data.palayers);
 
-}
+    }
     if (data.type === "game-over") {
 
       gameOver(data.winner);
@@ -377,7 +377,7 @@ export function gamehandler() {
     "p",
     {},
     "👠 Speed: ",
-    jsx("span", { id: "hud-speed" }, localPlayer.speed / 100)
+    jsx("span", { id: "hud-speed" }, "X" + localPlayer.speed)
   );
   const hud = jsx("div", { class: "hud" }, lives, firepower, Bombs, Speed);
 
