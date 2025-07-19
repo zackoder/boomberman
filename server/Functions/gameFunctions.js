@@ -1,6 +1,6 @@
 const { broadcast } = require("./helperFunctions");
 const MAX_ROWS = 15;
-const POWER_UP_TYPES = ["firepower", "maxBombs", "speed"];
+const POWER_UP_TYPES = ["speed","maxBombs", "firepower"];
 const powerUps = [];
 const DEFAULT_STATS = {
   firepower: 1,
@@ -156,48 +156,66 @@ function HandleExplosion(map, x, y, owner, players, bombs) {
     broadcast({ type: "explosion-cleared", newMap: map }, players);
   }, 500);
 }
-function applyPowerUp(player, stat, max, duration, players) {
-  if (max !== null && player[stat] >= max) return;
-  //  console.log(player[stat]);
+function applyPowerUp(player, power,POWER_UP_DURATION, players) {
+  // if (!player || player.dead) return;
 
-  player.maxBombs++;
-  //  console.log(player[stat]);
+  let stat;
+  let max;
+  
+  if (power === 7 && player.firepower < 2) {
+    stat = "firepower";
+    player.firepower++;
+    max = 2;
+  } else if (power === 8 && player.maxBombs < 3) {
+    stat = "maxBombs";
+    player.maxBombs++;
+    max = 3;
+  } else if (power === 9) {
+    stat = "speed";
+    player.speed = 100; 
+    broadcast({type :"update-speed"},players)
+  } else {
+    return;
+  }
 
+  // Broadcast new stat value
+  broadcast({
+    type: "power-up-collected",
+    name: player.name,
+    x: player.x,
+    y: player.y,
+    powerUp: stat,
+    newStats: {
+      firepower: player.firepower,
+      maxBombs: player.maxBombs,
+      speed: player.speed,
+    },
+  }, players);
+
+  // Schedule stat reset
   const timeoutKey = `${stat}Timeout`;
-
-  // Clear any existing timeout for this stat
   if (player[timeoutKey]) {
     clearTimeout(player[timeoutKey]);
   }
 
-  // Schedule stat reset after duration
   player[timeoutKey] = setTimeout(() => {
     player[stat] = DEFAULT_STATS[stat];
-    // player.maxBombs--;
 
-    // Notify client of expired power-up
-    broadcast(
-      {
-        type: "power-up-expired",
-        name: player.name,
-        stat,
-        value: player[stat],
-      },
-      players
-    );
+    broadcast({
+      type: "power-up-expired",
+      name: player.name,
+      stat,
+      value: player[stat],
+    }, players);
 
-    // If it's speed, also re-trigger update-speed so client re-throttles
     if (stat === "speed") {
-      broadcast(
-        {
-          type: "update-speed",
-          name: player.name,
-          speed: DEFAULT_STATS.speed,
-        },
-        players
-      );
+      broadcast({
+        type: "update-speed",
+        name: player.name,
+        speed: DEFAULT_STATS.speed,
+      }, players);
     }
-  }, duration);
+  }, POWER_UP_DURATION);
 }
 
 module.exports = { HandleExplosion, applyPowerUp, powerUps, POWER_UP_TYPES };

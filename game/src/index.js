@@ -24,13 +24,13 @@ const ManegLocalPlayer = new useState({});
 const ManageTimer = new useState(20);
 const Managemessages = new useState([]);
 const ManegAllPlayers = new useState({});
-const ManageError = new useState("")
+const ManageError = new useState("");
 
 export function homePage() {
-  localPlayer = ManegLocalPlayer.getStat()
+  localPlayer = ManegLocalPlayer.getStat();
 
   handlemsgs();
-  const currentTime = ManageTimer.getStat()
+  const currentTime = ManageTimer.getStat();
 
   const timerContainer = jsx("p", { class: "timer" }, "Timer : ", currentTime);
 
@@ -60,7 +60,7 @@ export function homePage() {
       jsx("span", {}, `from ${msg.sender} : `),
       jsx("span", {}, `${msg.message}`)
     );
-  })
+  });
 
   const chatSection = jsx(
     "div",
@@ -73,7 +73,12 @@ export function homePage() {
     )
   );
 
-  const container = jsx("div", { class: "container-chat" }, chatSection, ...messages);
+  const container = jsx(
+    "div",
+    { class: "container-chat" },
+    chatSection,
+    ...messages
+  );
   const err0 = jsx("div", { class: "err" }, ManageError.getStat());
 
   const form = jsx(
@@ -99,14 +104,22 @@ export function homePage() {
     "wait for other players to join",
     "you will start after the counter ends",
   ];
-  const playersCounternbr = ManegLocalPlayer.getStat().playersCounter
-  const playersCounter = jsx("p", { class: "playersCounter" }, "the current number of player(s) is; " + (playersCounternbr ? playersCounternbr : 0));
-  let pinfo
+  const playersCounternbr = ManegLocalPlayer.getStat().playersCounter;
+  const playersCounter = jsx(
+    "p",
+    { class: "playersCounter" },
+    "the current number of player(s) is; " +
+      (playersCounternbr ? playersCounternbr : 0)
+  );
+  let pinfo;
   if (playersCounternbr) {
     pinfo = jsx("p", {}, info[playersCounternbr > 1 ? 1 : 0]);
   }
-  return jsx("div", { class: "home-page", },
-    jsx("div",
+  return jsx(
+    "div",
+    { class: "home-page" },
+    jsx(
+      "div",
       {
         class: "gameInfo",
       },
@@ -164,7 +177,7 @@ function handlemsgs() {
     if (!data) return;
     if (data.newMap) {
       game.setNewMap(data.newMap);
-      ManageMap.setState(data.newMap)
+      ManageMap.setState(data.newMap);
     }
     if (data.message) {
       const prevMessages = Managemessages.getStat();
@@ -213,7 +226,8 @@ function handlemsgs() {
       // console.log("-----------------------", localPlayer);
       if (!localPlayer?.name) {
         ManegLocalPlayer.setState({
-          name: data.name, lives: 3,
+          name: data.name,
+          lives: 3,
           maxBombs: 3,
           firepower: 3,
           speed: 200,
@@ -227,20 +241,19 @@ function handlemsgs() {
     }
 
     if (data.Upplayer) {
-      localPlayer = ManegLocalPlayer.getStat()
+      localPlayer = ManegLocalPlayer.getStat();
       // console.log(data.Upplayer.name, localPlayer.name);
       if (data.Upplayer.name === localPlayer.name) {
-        ManegLocalPlayer.setState(data.Upplayer)
+        ManegLocalPlayer.setState(data.Upplayer);
       }
-
     }
     if (data.players) {
-      localPlayer = ManegLocalPlayer.getStat()
+      localPlayer = ManegLocalPlayer.getStat();
       ManegLocalPlayer.setState({
         ...localPlayer,
         playersCounter: data.players,
       });
-      console.log(localPlayer = ManegLocalPlayer.getStat())
+      console.log((localPlayer = ManegLocalPlayer.getStat()));
     }
 
     if (data.type === "init") {
@@ -252,7 +265,7 @@ function handlemsgs() {
       }
       // ManegAllPlayers.setState(allPlayers);
       //  requestAnimationFrame(game.drawMap(allPlayers))
-      ManageMap.setState(data.map)
+      ManageMap.setState(data.map);
       // for (let [key, value] of Object.entries(allPlayers)) {
       //   console.log(key, value);
       //   renderPlayer(value);
@@ -263,7 +276,6 @@ function handlemsgs() {
       // console.log(form);
     }
     if (data.type === "player-move") {
-
       ManegAllPlayers.setState(data.palayers);
       // ManegLocalPlayer.setState()
       // if (!allPlayers[data.name]) return;
@@ -283,9 +295,7 @@ function handlemsgs() {
       // drawBomb(data.x, data.y);
     }
     if (data.type === "bomb-exploded") {
-
       ManegAllPlayers.setState(data.palayers);
-
     }
     if (data.type === "player-dead") {
       ManegAllPlayers.setState(data.palayers);
@@ -311,28 +321,29 @@ function handlemsgs() {
       //     }`;
       // }
     }
-    // if (data.type === "power-up-expired") {
-    //   if (data.name === localPlayer.name) {
-    //     if (data.stat === "firepower") {
-    //       document.querySelector("#hud-fire").textContent = data.value;
-    //       localPlayer.firepower = data.value;
-    //     } else if (data.stat === "maxBombs") {
-    //       document.querySelector("#hud-bombs").textContent = data.value;
-    //       localPlayer.maxBombs = data.value;
-    //     } else if (data.stat === "speed") {
-    //       document.querySelector("#hud-speed").textContent = "1";
-    //       localPlayer.speed = data.value;
-    //     }
-    //   }
-    // }
-    // if (data.type === "update-speed" && data.name === localPlayer.name) {
-    //   moveDelay = data.speed;
-    //   localPlayer.speed = data.speed;
-    //   document.querySelector("#hud-speed").textContent = `x${200 / moveDelay}`;
-    //   throttledMove = throttle(handleMove, moveDelay);
-    // }
+    if (data.type === "power-up-expired") {
+      ManegAllPlayers.setState(data.palayers);
+      if (data.name === localPlayer.name) {
+        if (data.stat === "firepower") {
+          ManegAllPlayers.setState(data.palayers);
+        } else if (data.stat === "maxBombs") {
+          ManegAllPlayers.setState(data.palayers);
+        } else if (data.stat === "speed") {
+          moveDelay = 200
+          ManegAllPlayers.setState(data.palayers);
+        }
+      }
+    }
+    if (data.type === "update-speed" && data.name === localPlayer.name) {
+      moveDelay = data.speed;
+      localPlayer.speed = data.speed;
+      // document.querySelector("#hud-speed").textContent = `x${200 / moveDelay}`;
+      throttledMove = throttle(handleMove, moveDelay);
+     ManegAllPlayers.setState(data.palayers);
 
+}
     if (data.type === "game-over") {
+
       gameOver(data.winner);
     }
   };
@@ -342,33 +353,50 @@ rout.handleRouteChange();
 export function gamehandler() {
   // startanimating();
   if (game === null || players === null) return rout.navigate("/");
-  localPlayer = ManegLocalPlayer.getStat()
+  localPlayer = ManegLocalPlayer.getStat();
 
-  const lives = jsx("p", {}, "❤️ Lives:", jsx("span", { id: "hud-lives" }, localPlayer.lives));
+  const lives = jsx(
+    "p",
+    {},
+    "❤️ Lives:",
+    jsx("span", { id: "hud-lives" }, localPlayer.lives)
+  );
   const firepower = jsx(
     "p",
     {},
     "🔥 Firepower:",
     jsx("span", { id: "hud-fire" }, localPlayer.firepower)
   );
-  const Bombs = jsx("p", {}, "💣 Bombs: ", jsx("span", { id: "hud-bombs" }, localPlayer.maxBombs));
-  const Speed = jsx("p", {}, "👠 Speed: ", jsx("span", { id: "hud-speed" }, (localPlayer.speed / 100)));
+  const Bombs = jsx(
+    "p",
+    {},
+    "💣 Bombs: ",
+    jsx("span", { id: "hud-bombs" }, localPlayer.maxBombs)
+  );
+  const Speed = jsx(
+    "p",
+    {},
+    "👠 Speed: ",
+    jsx("span", { id: "hud-speed" }, localPlayer.speed / 100)
+  );
   const hud = jsx("div", { class: "hud" }, lives, firepower, Bombs, Speed);
 
-  const map = game.drawMap(ManageMap.getStat())
+  const map = game.drawMap(ManageMap.getStat());
 
-  const gamee = jsx("div", {
-    tabIndex: 0,
-    onkeydown: (e) => {
-      // console.log("hihi");
-      if (e.key !== "F5") e.preventDefault();
+  const gamee = jsx(
+    "div",
+    {
+      tabIndex: 0,
+      onkeydown: (e) => {
+        // console.log("hihi");
+        if (e.key !== "F5") e.preventDefault();
 
-      if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: "drop-bomb" }));
-      }
-      throttledMove(e);
+        if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: "drop-bomb" }));
+        }
+        throttledMove(e);
+      },
     },
-  },
     hud,
     map
   );
@@ -376,13 +404,12 @@ export function gamehandler() {
   return gamee;
 }
 
-
 function gameLoop() {
-  if (game && allPlayers) game.drawMap()
-  requestAnimationFrame(gameLoop)
+  if (game && allPlayers) game.drawMap();
+  requestAnimationFrame(gameLoop);
 }
 
-gameLoop()
+gameLoop();
 
 // function test() {
 //   console.log("hello");

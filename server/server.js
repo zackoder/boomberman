@@ -22,7 +22,7 @@ const START_POSITIONS = [
   { x: 1, y: MAX_ROWS - 2 },
   { x: MAX_ROWS - 2, y: MAX_ROWS - 2 },
 ];
-const MAX_POWERUP = 3;
+// const MAX_POWERUP = 3;
 
 // const MAX_SPEED = 2;
 const POWER_UP_DURATION = 30000;
@@ -178,16 +178,11 @@ ws.on("request", (req) => {
       const newY = player.y + dy;
       const newPosicell = map[newY]?.[newX];
       const currentcell = map[player.y][player.x];
-
+   
+    
       if (newPosicell !== 1 && newPosicell !== 2 && newPosicell !== 10) {
         if (newPosicell >= 7 && newPosicell <= 9) {
-          applyPowerUp(
-            player,
-            POWER_UP_TYPES[newPosicell - 6],
-            MAX_POWERUP,
-            POWER_UP_DURATION,
-            players
-          );
+          applyPowerUp(player, newPosicell,POWER_UP_DURATION, players);
         }
 
         if (currentcell >= 3 && currentcell <= 6) {
