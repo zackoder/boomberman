@@ -111,7 +111,7 @@ export function homePage() {
     "p",
     { class: "playersCounter" },
     "the current number of player(s) is; " +
-    (playersCounternbr ? playersCounternbr : 0)
+      (playersCounternbr ? playersCounternbr : 0)
   );
   let pinfo;
   if (playersCounternbr) {
@@ -177,10 +177,10 @@ function handlemsgs() {
 
     if (!data) return;
     if (data.winnerMessage) {
-      Managewinner.setState(data.winnerMessage)
+      Managewinner.setState(data.winnerMessage);
     }
     if (data.losermessage) {
-      Manageloser.setState(data.losermessage)
+      Manageloser.setState(data.losermessage);
     }
     if (data.newMap) {
       game.setNewMap(data.newMap);
@@ -336,7 +336,7 @@ function handlemsgs() {
         } else if (data.stat === "maxBombs") {
           ManegAllPlayers.setState(data.palayers);
         } else if (data.stat === "speed") {
-          moveDelay = 200
+          moveDelay = 200;
           ManegAllPlayers.setState(data.palayers);
         }
       }
@@ -347,10 +347,8 @@ function handlemsgs() {
       // document.querySelector("#hud-speed").textContent = `x${200 / moveDelay}`;
       throttledMove = throttle(handleMove, moveDelay);
       ManegAllPlayers.setState(data.palayers);
-
     }
     if (data.type === "game-over") {
-
       gameOver(data.winner);
     }
   };
@@ -361,20 +359,27 @@ export function gamehandler() {
   // startanimating();
   if (game === null || players === null) return rout.navigate("/");
   localPlayer = ManegLocalPlayer.getStat();
-  const loser = Manageloser.getStat()
-  const winner = Managewinner.getStat()
+  const loser = Manageloser.getStat();
+  const winner = Managewinner.getStat();
 
+  const winnerComp = jsx(
+    "div",
+    { class: "winner" },
+    jsx("p", { class: "messageWinner" }, winner)
+  );
 
-  const winnerComp = jsx()
-
-  const loserComp = jsx()
+  const loserComp = jsx(
+    "div",
+    { class: "loser" },
+    jsx("p", { class: "messageLooser" }, loser)
+  );
 
   if (winner) {
-    return winnerComp
+    return winnerComp;
   }
 
   if (loser) {
-    return loserComp
+    return loserComp;
   }
 
   const lives = jsx(

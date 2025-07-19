@@ -92,7 +92,7 @@ function HandleExplosion(map, x, y, owner, players, bombs, aliveplayers) {
         player.x = 0;
         player.y = 0;
 
-        aliveplayers--
+        aliveplayers--;
 
         // conn.sendUTF(
         //   JSON.stringify({
@@ -117,7 +117,6 @@ function HandleExplosion(map, x, y, owner, players, bombs, aliveplayers) {
       console.log("aliveplayers", aliveplayers);
 
       if (aliveplayers === 1) {
-
         // const alivePlayers = [...players.values()].filter((p) => {  conn, !p.dead });
         // if (alivePlayers.length <= 1) {
         // const winner = alivePlayers[0]?.name || null;
@@ -147,13 +146,22 @@ function HandleExplosion(map, x, y, owner, players, bombs, aliveplayers) {
       }
 
       broadcast(
-        { Upplayer: { name: player.name, lives: player.lives, maxBombs: player.maxBombs, firepower: player.firepower, speed: player.speed === 200 ? 1 : 2 }, type: "player-dead", newMap: map, name: player.name },
+        {
+          Upplayer: {
+            name: player.name,
+            lives: player.lives,
+            maxBombs: player.maxBombs,
+            firepower: player.firepower,
+            speed: player.speed === 200 ? 1 : 2,
+          },
+          type: "player-dead",
+          newMap: map,
+          name: player.name,
+        },
         players
       );
     }
   }
-
-
 
   // 🎆 Send explosion event
   broadcast(
@@ -169,9 +177,7 @@ function HandleExplosion(map, x, y, owner, players, bombs, aliveplayers) {
   setTimeout(() => {
     for (const tile of explosionTiles) {
       if (map[tile.y][tile.x] === 11) {
-
         for (let [conn, p] of players) {
-
           if (tile.y === p.y && p.x === tile.x) {
             map[tile.y][tile.x] = p.id;
             break;
@@ -202,31 +208,34 @@ function applyPowerUp(player, power, POWER_UP_DURATION, players) {
   } else if (power === 9) {
     stat = "speed";
     player.speed = 100;
-    broadcast({ type: "update-speed" }, players)
+    broadcast({ type: "update-speed" }, players);
   } else {
     return;
   }
 
   // Broadcast new stat value
-  broadcast({
-    type: "power-up-collected",
-    name: player.name,
-    x: player.x,
-    y: player.y,
-    powerUp: stat,
-    Upplayer: {
+  broadcast(
+    {
+      type: "power-up-collected",
       name: player.name,
-      lives: player.lives,
-      maxBombs: player.maxBombs,
-      firepower: player.firepower,
-      speed: player.speed === 200 ? 1 : 2
-    }
-    // newStats: {
-    //   firepower: player.firepower,
-    //   maxBombs: player.maxBombs,
-    //   speed: player.speed,
-    // },
-  }, players);
+      x: player.x,
+      y: player.y,
+      powerUp: stat,
+      Upplayer: {
+        name: player.name,
+        lives: player.lives,
+        maxBombs: player.maxBombs,
+        firepower: player.firepower,
+        speed: player.speed === 200 ? 1 : 2,
+      },
+      // newStats: {
+      //   firepower: player.firepower,
+      //   maxBombs: player.maxBombs,
+      //   speed: player.speed,
+      // },
+    },
+    players
+  );
 
   // Schedule stat reset
   const timeoutKey = `${stat}Timeout`;
@@ -237,26 +246,32 @@ function applyPowerUp(player, power, POWER_UP_DURATION, players) {
   player[timeoutKey] = setTimeout(() => {
     player[stat] = DEFAULT_STATS[stat];
 
-    broadcast({
-      type: "power-up-expired",
-      name: player.name,
-      stat,
-      value: player[stat],
-      Upplayer: {
+    broadcast(
+      {
+        type: "power-up-expired",
         name: player.name,
-        lives: player.lives,
-        maxBombs: player.maxBombs,
-        firepower: player.firepower,
-        speed: player.speed === 200 ? 1 : 2
-      }
-    }, players);
+        stat,
+        value: player[stat],
+        Upplayer: {
+          name: player.name,
+          lives: player.lives,
+          maxBombs: player.maxBombs,
+          firepower: player.firepower,
+          speed: player.speed === 200 ? 1 : 2,
+        },
+      },
+      players
+    );
 
     if (stat === "speed") {
-      broadcast({
-        type: "update-speed",
-        name: player.name,
-        speed: DEFAULT_STATS.speed,
-      }, players);
+      broadcast(
+        {
+          type: "update-speed",
+          name: player.name,
+          speed: DEFAULT_STATS.speed,
+        },
+        players
+      );
     }
   }, POWER_UP_DURATION);
 }
