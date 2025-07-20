@@ -343,7 +343,7 @@ function handlemsgs() {
     }
     if (data.type === "update-speed" && data.name === localPlayer.name) {
       moveDelay = data.speed;
-      localPlayer.speed = data.speed;
+      // localPlayer.speed = data.speed;
       // document.querySelector("#hud-speed").textContent = `x${200 / moveDelay}`;
       throttledMove = throttle(handleMove, moveDelay);
       ManegAllPlayers.setState(data.palayers);

@@ -169,6 +169,10 @@ body {
   animation: pulse 1s infinite ease-in-out;
 }
 
+.speed {
+  color: black;
+}
+
 @keyframes pulse {
   0% {
     transform: scale(1);

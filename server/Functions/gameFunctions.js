@@ -46,9 +46,18 @@ function HandleExplosion(map, x, y, owner, players, bombs, aliveplayers) {
           const powerupindex = Math.floor(
             Math.random() * POWER_UP_TYPES.length
           );
+          console.log("powerupindex---------", powerupindex);
+
+          console.log("heere : ", POWER_UP_TYPES);
+
           const type = POWER_UP_TYPES[powerupindex];
+
           powerUps.push({ x: nx, y: ny, type });
-          map[ny][nx] = 6 + powerupindex;
+          console.log("type------", type);
+
+          console.log("power", powerUps);
+
+          map[ny][nx] = 7 + powerupindex;
 
           broadcast(
             {
@@ -208,7 +217,7 @@ function applyPowerUp(player, power, POWER_UP_DURATION, players) {
   } else if (power === 9) {
     stat = "speed";
     player.speed = 100;
-    broadcast({ type: "update-speed" }, players);
+    // broadcast({ type: "update-speed", }, players);
   } else {
     return;
   }

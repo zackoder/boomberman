@@ -80,12 +80,12 @@ ws.on("request", (req) => {
         maxBombs: 1,
         activeBombs: 0,
         firepower: 1,
-        speed: 200,
+        speed: 1,
         color: PLAYER_COLORS[startIndex],
       };
       players.set(connection, player);
       if (map.length === 0) createmap();
-      let tmp = 2;
+      let tmp = 10;
       let interval = null;
       let currentTime = tmp;
       let waiting = 3;
@@ -93,7 +93,7 @@ ws.on("request", (req) => {
       if (players.size == 2) {
         interval = setInterval(() => {
           if (players.size === 4 || currentTime <= 0) {
-            aliveplayers = players.size
+            aliveplayers = players.size;
             clearInterval(interval);
             gameStat = true;
             currentTime = tmp;
@@ -177,7 +177,6 @@ ws.on("request", (req) => {
       const newY = player.y + dy;
       const newPosicell = map[newY]?.[newX];
       const currentcell = map[player.y][player.x];
-
 
       if (newPosicell !== 1 && newPosicell !== 2 && newPosicell !== 10) {
         if (newPosicell >= 7 && newPosicell <= 9) {
@@ -288,9 +287,9 @@ ws.on("request", (req) => {
     // const player = players[connection]
     if (leavingPlayer) {
       if (leavingPlayer.y !== 0 && leavingPlayer.x !== 0) {
-        map[leavingPlayer.y][leavingPlayer.x] = 0
-        leavingPlayer.y = 0
-        leavingPlayer.x = 0
+        map[leavingPlayer.y][leavingPlayer.x] = 0;
+        leavingPlayer.y = 0;
+        leavingPlayer.x = 0;
         aliveplayers--;
       }
 
