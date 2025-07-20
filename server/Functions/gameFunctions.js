@@ -8,7 +8,7 @@ const DEFAULT_STATS = {
   speed: 200,
 };
 
-function HandleExplosion(map, x, y, owner, players, bombs, aliveplayers) {
+function HandleExplosion(map, x, y, owner, players, bombs, removePlayer, getAlivePlayers) {
   const index = bombs.findIndex(
     (b) => b.x === x && b.y === y && b.owner === owner
   );
@@ -46,16 +46,16 @@ function HandleExplosion(map, x, y, owner, players, bombs, aliveplayers) {
           const powerupindex = Math.floor(
             Math.random() * POWER_UP_TYPES.length
           );
-          console.log("powerupindex---------", powerupindex);
+          // console.log("powerupindex---------", powerupindex);
 
           console.log("heere : ", POWER_UP_TYPES);
 
           const type = POWER_UP_TYPES[powerupindex];
 
           powerUps.push({ x: nx, y: ny, type });
-          console.log("type------", type);
+          // console.log("type------", type);
 
-          console.log("power", powerUps);
+          // console.log("power", powerUps);
 
           map[ny][nx] = 7 + powerupindex;
 
@@ -94,35 +94,17 @@ function HandleExplosion(map, x, y, owner, players, bombs, aliveplayers) {
       //     lives: player.lives,
       //   })
       // );
-
+      let aliveplayers = getAlivePlayers()
       if (player.lives <= 0) {
         player.dead = true;
         map[player.y][player.x] = 0;
         player.x = 0;
         player.y = 0;
 
-        aliveplayers--;
-
-        // conn.sendUTF(
-        //   JSON.stringify({
-        //     restart: "restart",
-        //     message: "You lost!",
-        //   })
-        // );
+        aliveplayers = removePlayer()
       }
-      /* 
-        name: 'zzzzz',
-        x: 10,
-        y: 1,
-        id: 4,
-        lives: 1,
-        maxBombs: 2,
-        activeBombs: 1,
-        firepower: 1,
-        speed: 200,
-        color: 'blue',
 
-      */
+
       console.log("aliveplayers", aliveplayers);
 
       if (aliveplayers === 1) {
@@ -130,7 +112,7 @@ function HandleExplosion(map, x, y, owner, players, bombs, aliveplayers) {
         // if (alivePlayers.length <= 1) {
         // const winner = alivePlayers[0]?.name || null;
         for (const [conn, player] of players.entries()) {
-          console.log("hello", player.name);
+          // console.log("hello", player.name);
 
           if (!player.dead) {
             conn.sendUTF(

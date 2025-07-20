@@ -27,6 +27,7 @@ const ManegAllPlayers = new useState({});
 const ManageError = new useState("");
 const Managewinner = new useState("");
 const Manageloser = new useState("");
+const ManagegameStart = new useState(false);
 
 export function homePage() {
   localPlayer = ManegLocalPlayer.getStat();
@@ -111,7 +112,7 @@ export function homePage() {
     "p",
     { class: "playersCounter" },
     "the current number of player(s) is; " +
-      (playersCounternbr ? playersCounternbr : 0)
+    (playersCounternbr ? playersCounternbr : 0)
   );
   let pinfo;
   if (playersCounternbr) {
@@ -176,6 +177,7 @@ function handlemsgs() {
     const data = JSON.parse(e.data);
 
     if (!data) return;
+
     if (data.winnerMessage) {
       Managewinner.setState(data.winnerMessage);
     }
@@ -191,11 +193,12 @@ function handlemsgs() {
       Managemessages.setState([data, ...prevMessages]);
     }
     if (data.gameStarted) {
-      if (alreadyStarted) return;
+      // if (alreadyStarted) return;
+      ManagegameStart.setState(data.gameStarted)
       // requestAnimationFrame(() => {
       // ManageMap.getStat();
       // console.log("hi");
-      rout.navigate("/game");
+      // rout.navigate("/game");
       // });
       // rout.navigate("/game");
       // requestAnimationFrame(game.drawMap(allPlayers));
@@ -260,7 +263,6 @@ function handlemsgs() {
         ...localPlayer,
         playersCounter: data.players,
       });
-      console.log((localPlayer = ManegLocalPlayer.getStat()));
     }
 
     if (data.type === "init") {
@@ -270,17 +272,8 @@ function handlemsgs() {
       for (let player of data.players) {
         allPlayers[player.name] = { ...player };
       }
-      // ManegAllPlayers.setState(allPlayers);
-      //  requestAnimationFrame(game.drawMap(allPlayers))
       ManageMap.setState(data.map);
-      // for (let [key, value] of Object.entries(allPlayers)) {
-      //   console.log(key, value);
-      //   renderPlayer(value);
-      // }
-
-      //delete this const form
-      // const form = document.querySelector(".chatForm");
-      // console.log(form);
+      rout.navigate("/game");
     }
     if (data.type === "player-move") {
       ManegAllPlayers.setState(data.palayers);
@@ -361,6 +354,9 @@ export function gamehandler() {
   localPlayer = ManegLocalPlayer.getStat();
   const loser = Manageloser.getStat();
   const winner = Managewinner.getStat();
+  const gamestarted = ManagegameStart.getStat()
+  const currentTime = ManageTimer.getStat()
+  const timerContainer = jsx("p", { class: "timer-started" }, gamestarted ? "you can start now" : "the game will in " + currentTime + "s");
 
   const winnerComp = jsx(
     "div",
@@ -410,24 +406,30 @@ export function gamehandler() {
 
   const map = game.drawMap(ManageMap.getStat());
 
+  console.log("gamestarted", gamestarted);
+
+
   const gamee = jsx(
     "div",
     {
       tabIndex: 0,
-      onkeydown: (e) => {
-        // console.log("hihi");
-        if (e.key !== "F5") e.preventDefault();
+      ...(gamestarted
+        ? {
+          onkeydown: (e) => {
+            if (e.key !== "F5") e.preventDefault();
 
-        if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ type: "drop-bomb" }));
+            if (e.key === " " && socket?.readyState === WebSocket.OPEN) {
+              socket.send(JSON.stringify({ type: "drop-bomb" }));
+            }
+            throttledMove(e);
+          }
         }
-        throttledMove(e);
-      },
+        : {}),
     },
+    timerContainer,
     hud,
     map
   );
-
   return gamee;
 }
 
@@ -435,6 +437,13 @@ function gameLoop() {
   if (game && allPlayers) game.drawMap();
   requestAnimationFrame(gameLoop);
 }
+
+let randem = Math.random()
+
+let test = { test: "test", ...{ ...randem > 0.5 ? { test2: "test2" } : {} } }
+
+console.log("test", test);
+
 
 gameLoop();
 

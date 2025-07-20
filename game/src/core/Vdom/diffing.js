@@ -2,10 +2,6 @@ import { createHTML, root } from "../dom.js";
 
 export function UpdateDOM(realElemt = root.children[0], oldVdom, newVdom) {
   if (!newVdom) {
-    // If newVdom is null/undefined, remove the element
-    if (realElemt && realElemt.parentNode) {
-      realElemt.parentNode.removeChild(realElemt);
-    }
     return;
   }
 

@@ -80,20 +80,21 @@ ws.on("request", (req) => {
         maxBombs: 1,
         activeBombs: 0,
         firepower: 1,
-        speed: 1,
+        speed: 200,
         color: PLAYER_COLORS[startIndex],
       };
       players.set(connection, player);
       if (map.length === 0) createmap();
-      let tmp = 10;
+      let tmp = 20;
       let interval = null;
       let currentTime = tmp;
-      let waiting = 3;
+      let waiting = 10;
 
       if (players.size == 2) {
         interval = setInterval(() => {
           if (players.size === 4 || currentTime <= 0) {
             aliveplayers = players.size;
+            console.log(aliveplayers);
             clearInterval(interval);
             gameStat = true;
             currentTime = tmp;
@@ -117,25 +118,26 @@ ws.on("request", (req) => {
           currentTime--;
           broadcast({ time: currentTime }, players);
         }, 1000);
-      }
-      let beforestart = null;
-      if (!beforestart) {
-        beforestart = setInterval(() => {
-          if (players.size < 2) {
-            broadcast({ players: players.size, restart: "restart" }, players);
-            clearInterval(beforestart);
-            return;
-          }
-          if (gameStat) {
-            if (waiting <= 0) {
-              broadcast({ gameStarted: true }, players);
+        let beforestart = null;
+        if (!beforestart) {
+          beforestart = setInterval(() => {
+            if (players.size < 2) {
+              broadcast({ players: players.size, restart: "restart" }, players);
               clearInterval(beforestart);
               return;
             }
-            broadcast({ time: waiting }, players);
-            waiting--;
-          }
-        }, 1000);
+            if (gameStat) {
+              waiting--;
+              broadcast({ time: waiting }, players);
+              if (waiting <= 0) {
+                broadcast({ gameStarted: true }, players);
+                clearInterval(beforestart);
+                return;
+              }
+
+            }
+          }, 1000);
+        }
       }
     }
     // if someone joined the game before it starts
@@ -178,25 +180,27 @@ ws.on("request", (req) => {
       const newPosicell = map[newY]?.[newX];
       const currentcell = map[player.y][player.x];
 
+      if (currentcell >= 3 && currentcell <= 6) {
+        // console.log("return to 0", players.values());
+        for (const p of players.values()) {
+          if (p.y === player.y && player.x === p.x && p.id !== player.id) {
+            map[player.y][player.x] = p.id;
+            console.log("return to 0", p.name);
+            break;
+          } else if (p.id !== player.id) {
+            // console.log(p);
+            map[player.y][player.x] = 0;
+            // break;
+          }
+        }
+      }
+
       if (newPosicell !== 1 && newPosicell !== 2 && newPosicell !== 10) {
         if (newPosicell >= 7 && newPosicell <= 9) {
           applyPowerUp(player, newPosicell, POWER_UP_DURATION, players);
         }
 
-        if (currentcell >= 3 && currentcell <= 6) {
-          // console.log("return to 0", player);
-          for (const p of players.values()) {
-            if (p.y === player.y && player.x === p.x && p.id !== player.id) {
-              map[player.y][player.x] = p.id;
-              // console.log("return to 0", p);
-              break;
-            } else if (p.id !== player.id) {
-              // console.log(p);
-              map[player.y][player.x] = 0;
-              break;
-            }
-          }
-        }
+
         map[newY][newX] = player.id;
         player.x = newX;
         player.y = newY;
@@ -276,7 +280,7 @@ ws.on("request", (req) => {
       map[y][x] = 10;
       setTimeout(() => {
         map[y][x] = 0;
-        HandleExplosion(map, x, y, name, players, bombs, aliveplayers);
+        HandleExplosion(map, x, y, name, players, bombs, removePlayer, getAlivePlayers);
         player.activeBombs--;
       }, 1200);
     }
@@ -284,13 +288,35 @@ ws.on("request", (req) => {
 
   connection.on("close", () => {
     const leavingPlayer = players.get(connection);
-    // const player = players[connection]
+
+    console.log(leavingPlayer);
     if (leavingPlayer) {
       if (leavingPlayer.y !== 0 && leavingPlayer.x !== 0) {
         map[leavingPlayer.y][leavingPlayer.x] = 0;
         leavingPlayer.y = 0;
         leavingPlayer.x = 0;
-        aliveplayers--;
+        aliveplayers = removePlayer()
+        if (aliveplayers === 1) {
+          for (const [conn, player] of players.entries()) {
+            // console.log("hello", player.name);
+
+            if (!player.dead) {
+              conn.sendUTF(
+                JSON.stringify({
+                  // restart: "restart",
+                  winnerMessage: "Congratulations, " + player.name + "! You’ve won the game!"
+                })
+              );
+            } else {
+              conn.sendUTF(
+                JSON.stringify({
+                  // restart: "restart",
+                  losermessage: "💀 Ouch! " + player.name + ", you lost. But hey, good try!"
+                })
+              );
+            }
+          }
+        }
       }
 
       broadcast(
@@ -305,6 +331,17 @@ ws.on("request", (req) => {
     players.delete(connection);
   });
 });
+
+function removePlayer() {
+  console.log("l3abali 3ad 3ayshin", aliveplayers);
+  console.log("l3abali 3ad 3ayshin", aliveplayers - 1);
+  // let newval = aliveplayers - 1
+  return aliveplayers -= 1
+}
+
+function getAlivePlayers() {
+  return aliveplayers
+}
 
 function createmap() {
   let row = [];
@@ -372,6 +409,5 @@ function generateMapSnapshot() {
     snapshot[player.y][player.x] = player.id;
     map[player.y][player.x] = player.id;
   }
-
   return snapshot;
 }

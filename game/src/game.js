@@ -55,7 +55,6 @@ export class Game {
             );
           }
         }
-        if (cell === 6) console.log("ana talo");
 
         if (cell === 0 || children) {
           mapElements.push(jsx("div", { class: "emptysell" }, children));
