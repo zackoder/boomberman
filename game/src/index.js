@@ -125,13 +125,13 @@ export function homePage() {
       {
         class: "gameInfo",
       },
-      localPlayer.name ? "" : form,
+      currentdata,
       playersCounter,
       pinfo ? pinfo : "",
       timerContainer,
       err0
     ),
-    localPlayer.name ? container : ""
+    
   );
   // return game;
 }
@@ -177,6 +177,7 @@ function handlemsgs() {
 
     if (!data) return;
     if (data.winnerMessage) {
+      localPlayer.name =undefined;
       Managewinner.setState(data.winnerMessage);
     }
     if (data.losermessage) {
@@ -349,6 +350,9 @@ function handlemsgs() {
       ManegAllPlayers.setState(data.palayers);
     }
     if (data.type === "game-over") {
+      debugger
+      console.log("hihihihiih");
+      
       gameOver(data.winner);
     }
   };
@@ -361,17 +365,27 @@ export function gamehandler() {
   localPlayer = ManegLocalPlayer.getStat();
   const loser = Manageloser.getStat();
   const winner = Managewinner.getStat();
+  
+
+
+  let button =jsx("button",{class :"button", onclick : ()=>{rout.navigate("/")}},"➡️ Return to chat" );
+ 
 
   const winnerComp = jsx(
     "div",
     { class: "winner" },
-    jsx("p", { class: "messageWinner" }, winner)
+    jsx("p", { class: "messageWinner" }, winner),
+    button
+    
+
   );
 
   const loserComp = jsx(
     "div",
     { class: "loser" },
-    jsx("p", { class: "messageLooser" }, loser)
+    jsx("p", { class: "messageLooser" }, loser),
+    button
+
   );
 
   if (winner) {

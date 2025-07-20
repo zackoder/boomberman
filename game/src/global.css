@@ -45,7 +45,10 @@ body {
   background-repeat: no-repeat;
   height: calc(100vh - 48px);
 }
-
+.winner,.loser {
+    flex-direction: column;
+    display: flex;
+}
 .gameContainer {
   width: 450px;
   height: 450px;
@@ -55,6 +58,15 @@ body {
   gap: 1px;
   margin: 50px auto;
   /* background-color: #222;   */
+}
+.button {
+    width: fit-content;
+    border: none;
+    background-color: yellow;
+    font-size: 17px;
+    border-radius: 30px;
+    padding: 20px;
+    margin: auto;
 }
 .err {
   color: red;
@@ -118,7 +130,7 @@ body {
   opacity: 0.7;
   padding: 20px;
   border-radius: 8px;
-  width: 400px;
+  width: 380px;
   margin: auto;
   color: #fff;
   border-radius: 8px;
@@ -298,7 +310,7 @@ body {
 .winner .messageWinner {
   font-size: 25px;
   text-align: center;
-  margin: auto;
+  margin: 275px 71px 30px;
   background: #f8ff3fa3;
   padding: 20px 5px;
   border-radius: 20px;
@@ -319,7 +331,7 @@ body {
 .loser .messageLooser {
   font-size: 25px;
   text-align: center;
-  margin: auto;
+  margin: 275px 71px 30px;
   background: #f8ff3fa3;
   padding: 20px 5px;
   border-radius: 20px;

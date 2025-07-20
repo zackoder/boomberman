@@ -85,7 +85,7 @@ ws.on("request", (req) => {
       };
       players.set(connection, player);
       if (map.length === 0) createmap();
-      let tmp = 10;
+      let tmp = 3;
       let interval = null;
       let currentTime = tmp;
       let waiting = 3;
