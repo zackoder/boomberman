@@ -1,8 +1,8 @@
 let {
   HandleExplosion,
   applyPowerUp,
-  powerUps,
-  POWER_UP_TYPES,
+  // powerUps,
+  // POWER_UP_TYPES,
 } = require("./Functions/gameFunctions");
 const { broadcast } = require("./Functions/helperFunctions");
 let aliveplayers;
@@ -134,7 +134,6 @@ ws.on("request", (req) => {
                 clearInterval(beforestart);
                 return;
               }
-
             }
           }, 1000);
         }
@@ -200,7 +199,6 @@ ws.on("request", (req) => {
           applyPowerUp(player, newPosicell, POWER_UP_DURATION, players);
         }
 
-
         map[newY][newX] = player.id;
         player.x = newX;
         player.y = newY;
@@ -213,46 +211,46 @@ ws.on("request", (req) => {
           players
         );
       }
-      const powerUpIndex = powerUps.findIndex(
-        (p) => p.x === player.x && p.y === player.y
-      );
-      if (powerUpIndex !== -1) {
-        // const powerUp = powerUps.splice(powerUpIndex, 1)[0];
-        // if (powerUp.type === "firepower") {
-        //   applyPowerUp(
-        //     player,
-        //     "firepower",
-        //     MAX_FIREPOWER,
-        //     POWER_UP_DURATION,
-        //     players
-        //   );
-        // } else if (powerUp.type === "bomb") {
-        //   applyPowerUp(
-        //     player,
-        //     "maxBombs",
-        //     MAX_BOMBS,
-        //     POWER_UP_DURATION,
-        //     players
-        //   );
-        // } else if (powerUp.type === "speed") {
-        //   applyPowerUp(player, "speed", null, POWER_UP_DURATION, players);
-        // }
-        // broadcast(
-        //   {
-        //     type: "power-up-collected",
-        //     name: player.name,
-        //     x: player.x,
-        //     y: player.y,
-        //     powerUp: powerUp.type,
-        //     newStats: {
-        //       firepower: player.firepower,
-        //       maxBombs: player.maxBombs,
-        //       speed: player.speed,
-        //     },
-        //   },
-        //   players
-        // );
-      }
+      // const powerUpIndex = powerUps.findIndex(
+      //   (p) => p.x === player.x && p.y === player.y
+      // );
+      // if (powerUpIndex !== -1) {
+      //   // const powerUp = powerUps.splice(powerUpIndex, 1)[0];
+      //   // if (powerUp.type === "firepower") {
+      //   //   applyPowerUp(
+      //   //     player,
+      //   //     "firepower",
+      //   //     MAX_FIREPOWER,
+      //   //     POWER_UP_DURATION,
+      //   //     players
+      //   //   );
+      //   // } else if (powerUp.type === "bomb") {
+      //   //   applyPowerUp(
+      //   //     player,
+      //   //     "maxBombs",
+      //   //     MAX_BOMBS,
+      //   //     POWER_UP_DURATION,
+      //   //     players
+      //   //   );
+      //   // } else if (powerUp.type === "speed") {
+      //   //   applyPowerUp(player, "speed", null, POWER_UP_DURATION, players);
+      //   // }
+      //   // broadcast(
+      //   //   {
+      //   //     type: "power-up-collected",
+      //   //     name: player.name,
+      //   //     x: player.x,
+      //   //     y: player.y,
+      //   //     powerUp: powerUp.type,
+      //   //     newStats: {
+      //   //       firepower: player.firepower,
+      //   //       maxBombs: player.maxBombs,
+      //   //       speed: player.speed,
+      //   //     },
+      //   //   },
+      //   //   players
+      //   // );
+      // }
     }
     if (data.type === "drop-bomb") {
       const player = players.get(connection);
@@ -280,7 +278,16 @@ ws.on("request", (req) => {
       map[y][x] = 10;
       setTimeout(() => {
         map[y][x] = 0;
-        HandleExplosion(map, x, y, name, players, bombs, removePlayer, getAlivePlayers);
+        HandleExplosion(
+          map,
+          x,
+          y,
+          name,
+          players,
+          bombs,
+          removePlayer,
+          getAlivePlayers
+        );
         player.activeBombs--;
       }, 1200);
     }
@@ -295,7 +302,7 @@ ws.on("request", (req) => {
         map[leavingPlayer.y][leavingPlayer.x] = 0;
         leavingPlayer.y = 0;
         leavingPlayer.x = 0;
-        aliveplayers = removePlayer()
+        aliveplayers = removePlayer();
         if (aliveplayers === 1) {
           for (const [conn, player] of players.entries()) {
             // console.log("hello", player.name);
@@ -304,14 +311,20 @@ ws.on("request", (req) => {
               conn.sendUTF(
                 JSON.stringify({
                   // restart: "restart",
-                  winnerMessage: "Congratulations, " + player.name + "! You’ve won the game!"
+                  winnerMessage:
+                    "Congratulations, " +
+                    player.name +
+                    "! You’ve won the game!",
                 })
               );
             } else {
               conn.sendUTF(
                 JSON.stringify({
                   // restart: "restart",
-                  losermessage: "💀 Ouch! " + player.name + ", you lost. But hey, good try!"
+                  losermessage:
+                    "💀 Ouch! " +
+                    player.name +
+                    ", you lost. But hey, good try!",
                 })
               );
             }
@@ -336,11 +349,11 @@ function removePlayer() {
   console.log("l3abali 3ad 3ayshin", aliveplayers);
   console.log("l3abali 3ad 3ayshin", aliveplayers - 1);
   // let newval = aliveplayers - 1
-  return aliveplayers -= 1
+  return (aliveplayers -= 1);
 }
 
 function getAlivePlayers() {
-  return aliveplayers
+  return aliveplayers;
 }
 
 function createmap() {
